@@ -422,6 +422,10 @@ def render_recording(recording: Mapping[str, Any], output_dir: Path) -> dict[str
     No experiment code is imported or executed here. Existing named outputs are
     replaced only after their replacements have been encoded successfully.
     """
+    if _mode(recording) == "live_idle_cpu":
+        from .idle_render import render_idle_recording
+
+        return render_idle_recording(recording, output_dir)
     if _mode(recording) == "live_cpu":
         return render_live_recording(recording, output_dir)
     validate_recording(recording)

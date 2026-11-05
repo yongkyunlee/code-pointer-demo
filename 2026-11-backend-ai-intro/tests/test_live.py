@@ -78,7 +78,10 @@ def test_invalid_resource_json_is_rejected():
 @pytest.fixture
 def blocked_sample():
     """Mutate the saved API evidence to exercise false-positive checks."""
-    path = Path(__file__).parents[1] / "recordings/macos-arm64/recording.json"
+    path = (
+        Path(__file__).parents[1]
+        / "experiments/01-fifo-queue/recordings/macos-arm64/recording.json"
+    )
     recording = json.loads(path.read_text())
     checkpoint = next(
         item for item in recording["checkpoints"] if item["label"] == "Alice and Bob pending"

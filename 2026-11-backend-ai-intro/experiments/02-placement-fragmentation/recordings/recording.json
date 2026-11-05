@@ -1,0 +1,821 @@
+{
+  "cases": [
+    {
+      "id": "small_first",
+      "node_input_order": [
+        "node-a",
+        "node-b"
+      ],
+      "request_order": [
+        1,
+        3,
+        4
+      ],
+      "strategies": [
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 3,
+                "node-b": 4
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "free_before": {
+                "node-a": 3,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 0
+              },
+              "free_before": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 4,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 3,
+              "status": "placed"
+            }
+          ],
+          "strategy": "concentrated"
+        },
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 3,
+                "node-b": 4
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 3,
+                "node-b": 1
+              },
+              "free_before": {
+                "node-a": 3,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [
+                {
+                  "filter": "resource",
+                  "missing_slots_on_best_candidate": {
+                    "cuda.device": "1"
+                  },
+                  "requirement_index": 0
+                }
+              ],
+              "free_after": {
+                "node-a": 3,
+                "node-b": 1
+              },
+              "free_before": {
+                "node-a": 3,
+                "node-b": 1
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 4,
+              "selected_agents": [],
+              "sequence": 3,
+              "status": "cannot_place"
+            }
+          ],
+          "strategy": "dispersed"
+        }
+      ]
+    },
+    {
+      "id": "reversed_node_order",
+      "node_input_order": [
+        "node-b",
+        "node-a"
+      ],
+      "request_order": [
+        1,
+        3,
+        4
+      ],
+      "strategies": [
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 4,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 4,
+                "node-b": 0
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 3
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 0
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 0
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 4,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 3,
+              "status": "placed"
+            }
+          ],
+          "strategy": "concentrated"
+        },
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 4,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 1,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 3
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [
+                {
+                  "filter": "resource",
+                  "missing_slots_on_best_candidate": {
+                    "cuda.device": "1"
+                  },
+                  "requirement_index": 0
+                }
+              ],
+              "free_after": {
+                "node-a": 1,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 1,
+                "node-b": 3
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 4,
+              "selected_agents": [],
+              "sequence": 3,
+              "status": "cannot_place"
+            }
+          ],
+          "strategy": "dispersed"
+        }
+      ]
+    },
+    {
+      "id": "largest_first",
+      "node_input_order": [
+        "node-a",
+        "node-b"
+      ],
+      "request_order": [
+        4,
+        1,
+        3
+      ],
+      "strategies": [
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 4,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 0
+              },
+              "free_before": {
+                "node-a": 0,
+                "node-b": 3
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 3,
+              "status": "placed"
+            }
+          ],
+          "strategy": "concentrated"
+        },
+        {
+          "steps": [
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "free_before": {
+                "node-a": 4,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-1",
+              "requested_gpu_slots": 4,
+              "selected_agents": [
+                "node-a"
+              ],
+              "sequence": 1,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 3
+              },
+              "free_before": {
+                "node-a": 0,
+                "node-b": 4
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-2",
+              "requested_gpu_slots": 1,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 2,
+              "status": "placed"
+            },
+            {
+              "failures": [],
+              "free_after": {
+                "node-a": 0,
+                "node-b": 0
+              },
+              "free_before": {
+                "node-a": 0,
+                "node-b": 3
+              },
+              "preempting_session_ids": [],
+              "request_id": "request-3",
+              "requested_gpu_slots": 3,
+              "selected_agents": [
+                "node-b"
+              ],
+              "sequence": 3,
+              "status": "placed"
+            }
+          ],
+          "strategy": "dispersed"
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "all_passed": true,
+    "concentrated_places_all_three": true,
+    "dispersed_rejects_last_request_with_four_free_slots": true,
+    "every_step_conserves_capacity": true,
+    "largest_first_allows_both_strategies_to_place_all_requests": true,
+    "loaded_source_matches_wheel_record": true,
+    "rejected_request_leaves_inventory_unchanged": true,
+    "reversed_node_order_preserves_fit_result": true
+  },
+  "experiment": {
+    "id": "placement-fragmentation",
+    "mode": "component_synthetic_gpu",
+    "request_semantics": "Each request must fit on one node; requests remain allocated.",
+    "scope": "Real factory-created AgentSelector.compute_placements, filters, strategies and state trackers; synthetic whole-GPU inventories. Placement acceptance is not container execution. No services, database, queue, CUDA, GPU workload or timing."
+  },
+  "fixture": {
+    "architecture": "x86_64",
+    "container_limit": null,
+    "designated_agents": null,
+    "gpu_slots_per_node": 4,
+    "initial_container_count": 0,
+    "initial_reserved_slots": 0,
+    "initial_used_slots": 0,
+    "omitted_resource_dimensions": [
+      "cpu",
+      "mem"
+    ],
+    "preemption_candidates": null,
+    "resource_priority": [
+      "cuda.device",
+      "cpu",
+      "mem"
+    ],
+    "resource_slot": "cuda.device",
+    "session_group": null
+  },
+  "provenance": {
+    "harness_sha256": "c23f49964b690530ff9b647c205c9b0f2bdb9f43add99c0afa2fb611302bdafc",
+    "installed_distributions": {
+      "backend.ai-common": "26.9.7",
+      "backend.ai-manager": "26.9.7"
+    },
+    "modules": [
+      {
+        "distribution": "backend.ai-common",
+        "matches_wheel_record": true,
+        "module": "ai.backend.common.data.entity.resource_slot",
+        "path": "ai/backend/common/data/entity/resource_slot.py",
+        "sha256": "dd84e3bc5b1622278ace4c260d538e342d078a598c62e29c33070596925b5bba"
+      },
+      {
+        "distribution": "backend.ai-common",
+        "matches_wheel_record": true,
+        "module": "ai.backend.common.types",
+        "path": "ai/backend/common/types.py",
+        "sha256": "53917d17202070e9054bea1deedaab0dd426b6aae228712b618aa6af4a902412"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.data.session.options",
+        "path": "ai/backend/manager/data/session/options.py",
+        "sha256": "2728877773e7778f6d28b8cd4a2ce8834f2da4b82ba2a864d8c6d1183f9ac2e8"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.concentrated",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/concentrated.py",
+        "sha256": "5a82b7a72babffc274c3768f7fe7ac94346241f2fde2af8500f9bab79091d815"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.dispersed",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/dispersed.py",
+        "sha256": "54d1f53dac30dcc8d332847ffc7c750239cd362622dfa92e5d107b57aa9cb7f3"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.exceptions",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/exceptions.py",
+        "sha256": "ac4873397e716fd20acf23c4804ef31bf85b37f474b49c868b04d680644ea25d"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/__init__.py",
+        "sha256": "bf9cfc38d742edbdc7f75efb43603bbffd8140d3ae07d35fb55e10b1ff7382d9"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.exclusion",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/exclusion/__init__.py",
+        "sha256": "918d5bd347fffd6db3cabe6c6aa65aa9dd489c79d0d98c08ad4e48259ebe3162"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.exclusion.architecture",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/exclusion/architecture.py",
+        "sha256": "9c2d2273be369c091d679bc684a8a167daaa3c78336934f8ee98f7967ffadbdd"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.exclusion.designated_strict",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/exclusion/designated_strict.py",
+        "sha256": "d24725819fa66f01637f1ee6b55a5ae64a2dba30cfd3a9f80e8386069b67b144"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.exclusion.filter",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/exclusion/filter.py",
+        "sha256": "a7b134d6170350a261207c076886435fea414dba6980db569a4eb8397b3eac02"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.exclusion.session_group_strict",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/exclusion/session_group_strict.py",
+        "sha256": "35c61c37c5f23759df506bbe63f2276c7f6405027df121914e5379699a57608c"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.stateful",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/stateful/__init__.py",
+        "sha256": "44a11a4e84cbc97f4fcfac50da172da7c19d3053527bcfdba35fc16d5252dc89"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.stateful.container_limit",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/stateful/container_limit.py",
+        "sha256": "89434456f96e4ec7c752ff5ee7d871d0fcb73abad798f353c4640ca930427687"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.stateful.filter",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/stateful/filter.py",
+        "sha256": "e6365c21c4d20934107755115823842ab73f897105df70c8b4387c973e1c7b8b"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.filters.stateful.resource",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/filters/stateful/resource.py",
+        "sha256": "b1b4ce39604e5f491b41f0cdea0abb37f7ecd038922826a946cec4ae556fa0ee"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.legacy",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/legacy.py",
+        "sha256": "e072c8400b545c89a59381f28857c3bad4b034c498a7b96e8824a73e8d2cf8b9"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.orders",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/orders/__init__.py",
+        "sha256": "9f5779dc6d50cf62d8f54eb18a65f25e85459b870c460483cd4ad118de801933"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.orders.designated_preferred",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/orders/designated_preferred.py",
+        "sha256": "bc22b4938e82cf4d61336b6862afa0826d9e0843054c8fa392158a98e6d493a3"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.orders.failed_session",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/orders/failed_session.py",
+        "sha256": "43d78c8a558a30d5111d052a6e8bb7c46322bea8ac9ae5e4c206c04252c39ca9"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.orders.order",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/orders/order.py",
+        "sha256": "52be869eadd0c56e3e508620623fe5057b55ebc8340a7151823b66b3305b8609"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.orders.session_group",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/orders/session_group.py",
+        "sha256": "98ca45330a51ccd2115b22e18aec68c9511990ed17903da7af19786679b899ed"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.pool",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/pool.py",
+        "sha256": "08193ad56409cfe98dca817e712b84ab0db0b329d0e4485fc0ec5d9aa490b4c9"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.roundrobin",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/roundrobin.py",
+        "sha256": "dabe3ffb7c84bbaf3b5c63f256fc087119113efd915adad5a5372e14e058a9d5"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.selector",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/selector.py",
+        "sha256": "a79fc54742a8f813fbafd533a706b417dbd1955a2641d010754db89580db364a"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.tracker",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/tracker.py",
+        "sha256": "f09611c5e5da0e20493cab0c9b45731f9354292a6756dd051307bf3da725a4d4"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.types",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/types.py",
+        "sha256": "2bdda9bed62450225e2db2f5f95f034bfbd04ae353c9964e8121bd2d74c5ca09"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.utils",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/utils.py",
+        "sha256": "008e7290966659e8d3f0586c20b070c4fc7e809d8628b5fd7b20742c5c4aca1e"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/__init__.py",
+        "sha256": "4c8897fa617ecf564d174b7f6f7297bf009ec5c6276c424710396fb926609dd6"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.fewest_sessions",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/fewest_sessions.py",
+        "sha256": "e581a9e14819be9dee5c58b22465cbe9ebbe90147107c8c8c84c5e82ead16fc2"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.newest",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/newest.py",
+        "sha256": "3b57908199d90d0dda42a33ef3edf73eface30d4c8e90bed0f0486d255c0edae"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.oldest",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/oldest.py",
+        "sha256": "fe51fe713bdc7a90712de984a35ab0558fbb245b6cee1f6d21a0c1f5e1bde2dd"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.order",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/order.py",
+        "sha256": "4aec0385ae0f9a05a1d1b9092a8671c5a6af400fc5ee926f460e5c4886850ba0"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.pool",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/pool.py",
+        "sha256": "c9349ba7b55beaa2d6ca0104068119c8c7e11e091b96f887fb5bb81dca7e4881"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.selector",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/selector.py",
+        "sha256": "c6fedf70fa81a22262280647f9163d027ecb0e02b1f65e21b43c6875e6d5a0d6"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.sokovan.scheduler.provisioner.selectors.victims.smallest_resources",
+        "path": "ai/backend/manager/sokovan/scheduler/provisioner/selectors/victims/smallest_resources.py",
+        "sha256": "735bf4927ff31d1b6be9458a7f2f06fb27fbccde5e2be92c530ebf865f68a0bd"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.agent",
+        "path": "ai/backend/manager/views/sokovan/agent.py",
+        "sha256": "05052c6f7e8ec456c43df4bf84a3e1e5b48d3cb78c45cbe725213a8e9260b0ed"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.allocation",
+        "path": "ai/backend/manager/views/sokovan/allocation.py",
+        "sha256": "d5a16510662291ef6b5a9f8f910c746487ea43ce765d38a24b241d040434044f"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.handler",
+        "path": "ai/backend/manager/views/sokovan/handler.py",
+        "sha256": "c4a33641deaaab42fb022d294c548d16f763cfb83fe451a0120f3bfdc4f0935d"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.image",
+        "path": "ai/backend/manager/views/sokovan/image.py",
+        "sha256": "830eadb21dd583268cf42fa6384bc5e46ebb99d9fd35680c9cf12f0775c3acfb"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.lifecycle",
+        "path": "ai/backend/manager/views/sokovan/lifecycle.py",
+        "sha256": "f2b18fa6dadb60f653c690745e5a23bae664adc8f3ce9891119aaf5695eff095"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.resource_group",
+        "path": "ai/backend/manager/views/sokovan/resource_group.py",
+        "sha256": "b6682594728f1f86d06fd3d65fefdff8f1110aba59cb06d175d8838b092c7b0e"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.scheduling",
+        "path": "ai/backend/manager/views/sokovan/scheduling.py",
+        "sha256": "f6ce3cf6bf5432efd5715b5317fb87d118498270acc6eca48bcbb1a2aff3f0b2"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.search",
+        "path": "ai/backend/manager/views/sokovan/search.py",
+        "sha256": "16b3affac488dc1be1612377ee8ceada984a045e1c548967dba0c27588b3d700"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.session",
+        "path": "ai/backend/manager/views/sokovan/session.py",
+        "sha256": "a7e782fb7a3caf2d5dd1eb7a454267e1b176e4bcec58584f4d6c49f171cba735"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.session_creation",
+        "path": "ai/backend/manager/views/sokovan/session_creation.py",
+        "sha256": "13c619326f34e03967257b12aaad61d752bd40a8475b39735afce9f60b453126"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.snapshot",
+        "path": "ai/backend/manager/views/sokovan/snapshot.py",
+        "sha256": "33dfe8e185242ede132d05c0debbbd9e2a40b1e2c273fb8e78f7fc1c76fa911a"
+      },
+      {
+        "distribution": "backend.ai-manager",
+        "matches_wheel_record": true,
+        "module": "ai.backend.manager.views.sokovan.workload",
+        "path": "ai/backend/manager/views/sokovan/workload.py",
+        "sha256": "7f00629806d8809206a1120d587375475d82b39804541ae8f8a90ea66ba9f2c1"
+      }
+    ],
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.18",
+    "recorded_at_utc": "2026-11-05T17:13:36.984268+00:00",
+    "release_reference_note": "The commit identifies the release source reference, not an embedded wheel commit.",
+    "source": "Installed PyPI distributions; loaded source matches wheel RECORD hashes.",
+    "upstream_release_commit_reference": "332a308e34c5c7bcd57939850fe032cfd8d8ca00",
+    "upstream_release_tag": "26.9.7",
+    "uv_lock_sha256": "eca3b99d4131cf613dc89607695c41379a2e76b7508f9fa7b4aed256c891635e"
+  },
+  "schema_version": 1
+}

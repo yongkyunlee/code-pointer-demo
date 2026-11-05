@@ -14,4 +14,4 @@ The runner saved 45 API samples. All operational checks, API cleanup, and final 
 
 Elapsed times describe this run, not a performance benchmark. Infrastructure setup happened before recording began. The GIF uses fixed frame durations for readability.
 
-Reproduce the experiment with the commands in [the experiment README](../../README.md). Replay this exact recording with `uv run --locked backend-ai-intro render recordings/macos-arm64/recording.json --output artifacts/replay`.
+Reproduce the experiment with the commands in [the experiment README](../../README.md). Replay this exact recording with `uv run --locked backend-ai-intro render experiments/01-fifo-queue/recordings/macos-arm64/recording.json --output artifacts/replay`.

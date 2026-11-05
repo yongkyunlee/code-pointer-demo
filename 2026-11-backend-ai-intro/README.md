@@ -1,16 +1,16 @@
-# Backend.AI queue order and resource release
+# Backend.AI scheduling experiments
 
-This experiment runs Backend.AI 26.9.7 locally with a four-CPU worker. It submits three ordinary interactive sessions, records the public API responses and scheduling history, and draws a GIF from the saved JSON. GPUs are not required.
+Three scenarios accompany the Code Pointer article about shared compute. Each has its own runnable folder and evidence, with shared Backend.AI 26.9.7 dependencies and local setup.
 
-The current session holds two CPU slots. Alice requests four, followed by Bob's request for one. The FIFO scheduling pass cannot place Alice and skips Bob, even though Bob's request would fit. After the current session ends, Alice starts. After Alice ends, Bob starts.
+| Experiment | Execution | Scenario |
+|---|---|---|
+| [01 · FIFO queue](experiments/01-fifo-queue/) | Live manager, agent, storage proxy and containers | A large request keeps a smaller request waiting; explicit termination releases capacity |
+| [02 · Placement fragmentation](experiments/02-placement-fragmentation/) | Real placement code with synthetic GPU inventories | Four free slots split across machines cannot satisfy a four-slot request on one machine |
+| [03 · Idle reclamation](experiments/03-idle-reclamation/) | Live services, containers and CPU activity metrics | An idle session is reclaimed, waiting work starts, and a saved file survives in a new session |
 
-![Recorded Backend.AI session lifecycle](recordings/macos-arm64/scheduler.gif)
+The live experiments use CPU resources on a laptop. The placement experiment uses synthetic GPU inventory and does not launch containers. None measures physical GPU performance, GPU-memory isolation, or model-serving latency. The experiment READMEs distinguish observed results from their scope limits.
 
-The [saved recording](recordings/macos-arm64/recording.json) and [static storyboard](recordings/macos-arm64/storyboard.png) come from a local macOS ARM64 run. The JSON includes the observed checks and cleanup result. Exact elapsed times vary between machines and runs.
-
-Alice and Bob are workload labels. The live experiment submits all three sessions through one generated administrator account. Quotas are sufficient, and the sessions do not perform a CPU benchmark. The squares in the visualization represent resource accounting, not measured CPU activity.
-
-## Reproduce the live experiment
+## Reproduce the experiments
 
 Requirements:
 
@@ -24,16 +24,19 @@ Requirements:
 git clone https://github.com/yongkyunlee/code-pointer-demo.git
 cd code-pointer-demo/2026-11-backend-ai-intro
 uv sync --locked
-uv run --locked python run.py
+# Run any scenario independently. The live commands need Docker.
+uv run --locked python experiments/01-fifo-queue/run.py
+uv run --locked python experiments/02-placement-fragmentation/run.py
+uv run --locked python experiments/03-idle-reclamation/run.py
 ```
 
-`run.py` creates isolated PostgreSQL, Valkey, and etcd containers, initializes Backend.AI from the pinned upstream fixtures, starts its manager, agent, and storage proxy, and performs the experiment. It terminates its own sessions and stops its own services afterward. It removes the experiment's database volumes; downloaded images remain cached for another run.
+The live scenario wrappers call the shared `run.py`, which creates isolated PostgreSQL, Valkey, and etcd containers, initializes Backend.AI from the pinned upstream fixtures, starts its manager, agent, and storage proxy, and performs the experiment. It terminates its own sessions and stops its own services afterward. It removes the experiment's database volumes; downloaded images remain cached for another run.
 
 If API termination fails, cleanup resolves this run's exact session names and IDs and checks their Docker labels before removing remaining workload containers. If ownership or removal cannot be verified, it preserves the infrastructure and database for recovery. A lock prevents concurrent runs in the same checkout.
 
 Generated credentials, service logs, configuration, and the upstream source cache stay under the ignored `.runtime/` directory. Services listen on loopback. The setup does not modify shell profiles, the Docker configuration, or an existing Backend.AI installation. Use an otherwise idle local Docker engine for the experiment.
 
-The default output is `artifacts/live/`:
+Each live wrapper saves output under its own `artifacts/live/` directory. The root `python run.py` command remains a shortcut for FIFO and writes `artifacts/live/` at the project root. Output includes:
 
 - `recording.json` contains observed API samples, operator actions, scheduling history, checkpoints, checks, and cleanup results. Partial evidence is saved if a stage fails.
 - `scheduler.gif`, `storyboard.png`, and `keyframe.png` are derived from selected samples in that recording.
@@ -50,13 +53,13 @@ Rendering does not need Docker or an active Backend.AI installation:
 uv run --locked backend-ai-intro render artifacts/live/recording.json --output artifacts/replay
 ```
 
-To replay the committed reference, replace the input path with `recordings/macos-arm64/recording.json`.
+The original FIFO reference is now in `experiments/01-fifo-queue/recordings/macos-arm64/recording.json`. Its contents are unchanged. Each scenario README provides its replay command.
 
 The renderer selects actual recorded checkpoints. It does not invent startup states or convert successful placement into a claim that a container ran. GIF playback uses fixed presentation durations; displayed elapsed times come from the recording.
 
 Session and agent API queries are sequential, so a sample is not an atomic database snapshot. The agent's `occupied_slots` field reports used resources; reservations can exist before that count changes. The experiment checks stable running states and keeps the original observations for inspection.
 
-## Smaller scheduler experiment
+## Additional FIFO component experiment
 
 A separate component experiment runs Backend.AI's real quota validator, FIFO sequencer, placement selector, and provisioner directly. It requires Python dependencies but no Docker, database, or GPU:
 
@@ -88,7 +91,10 @@ The tests exercise real scheduling decisions in the component experiment and cov
 
 - `run.py` supervises the complete local run and infrastructure cleanup.
 - `runtime_setup.py` prepares private configuration and verifies the bootstrapped database.
-- `src/backend_ai_intro/live.py` submits sessions and records actual API observations.
+- `src/backend_ai_intro/idle_setup.py` adds a pinned Prometheus service and connects the manager to measured activity.
+- `experiments/` contains each scenario's entry point, instructions, and reference evidence.
+- `src/backend_ai_intro/live.py` records the original FIFO scenario. `idle.py` records idle-policy behavior and persistent files.
+- `src/backend_ai_intro/fragmentation.py` compares placement strategies on synthetic inventories.
 - `src/backend_ai_intro/experiment.py` and `upstream_adapter.py` implement the component experiment.
 - `src/backend_ai_intro/render.py` renders saved recordings.
 - `tests/` checks behavior and failure handling.

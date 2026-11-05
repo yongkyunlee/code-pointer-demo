@@ -186,7 +186,9 @@ def services(runtime: Path) -> Iterator[None]:
                 child.wait(timeout=5)
 
 
-def reproduce(output: Path, source: Path | None, timeout: float) -> None:
+def reproduce(output: Path, source: Path | None, timeout: float, *, scenario: str = "fifo") -> None:
+    if scenario not in {"fifo", "idle"}:
+        raise ValueError("Unknown live experiment")
     if platform.system() not in {"Darwin", "Linux"}:
         raise RuntimeError(
             "The live setup supports macOS and Linux; use Linux through WSL on Windows"
@@ -198,7 +200,10 @@ def reproduce(output: Path, source: Path | None, timeout: float) -> None:
         clear_generated_artifacts(output, include_recording=True)
         write_json(output / "run-status.json", {"passed": False, "state": "running"})
         try:
-            _reproduce(output, source, timeout)
+            if scenario == "fifo":
+                _reproduce(output, source, timeout)
+            else:
+                _reproduce(output, source, timeout, scenario=scenario)
         except BaseException as error:
             save_failure(output, error)
             raise
@@ -206,7 +211,9 @@ def reproduce(output: Path, source: Path | None, timeout: float) -> None:
             write_json(output / "run-status.json", {"passed": True, "state": "complete"})
 
 
-def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
+def _reproduce(
+    output: Path, source: Path | None, timeout: float, *, scenario: str = "fifo"
+) -> None:
     runtime = ROOT / ".runtime"
     docker_endpoint = command_output(
         "docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"
@@ -223,6 +230,10 @@ def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
         "-f",
         str(ROOT / "compose.yaml"),
     ]
+    if scenario == "idle":
+        from backend_ai_intro.idle_setup import configure_runtime
+
+        compose.extend(["-f", str(configure_runtime(runtime))])
     output.mkdir(parents=True, exist_ok=True)
     compose_started = False
     owned_ids: set[str] = set()
@@ -260,7 +271,12 @@ def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
         )
         with environment(values), services(runtime):
             print("Recording sessions, scheduler decisions, and resource release...", flush=True)
-            recording = run_live_experiment(
+            experiment = run_live_experiment
+            if scenario == "idle":
+                from backend_ai_intro.idle import run_idle_experiment
+
+                experiment = run_idle_experiment
+            recording = experiment(
                 config,
                 output / "recording.json",
                 owned_session_ids=owned_ids,
@@ -311,8 +327,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts/live")
     parser.add_argument("--source", type=Path, help="Optional existing Backend.AI clone at the pin")
     parser.add_argument("--stage-timeout", type=float, default=300)
+    parser.add_argument("--scenario", choices=("fifo", "idle"), default="fifo")
     args = parser.parse_args()
-    reproduce(args.output.resolve(), args.source, args.stage_timeout)
+    reproduce(args.output.resolve(), args.source, args.stage_timeout, scenario=args.scenario)
 
 
 if __name__ == "__main__":

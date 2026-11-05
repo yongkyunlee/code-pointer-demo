@@ -1,0 +1,21 @@
+{
+  "artifacts": {
+    "comparison": {
+      "file": "comparison.png",
+      "sha256": "92c8c4c5b7aa8c269ca5aa4fcbdb9049e7631a64fc29db22c60273e0dbb2c271"
+    },
+    "gif": {
+      "file": "placement.gif",
+      "sha256": "ed416ba4b99118855cc2fb0a86a3f35ce4bcba55808b12d1d4a4488737086c30"
+    },
+    "storyboard": {
+      "file": "storyboard.png",
+      "sha256": "63330be5c55e204f343fcbeab35fea4852028f01daf5a5cd1c9347dfa217e356"
+    }
+  },
+  "canonical_json_format": "UTF-8 json.dumps(sort_keys=True, separators=(',', ':'))",
+  "recording_canonical_json_sha256": "66caee27545696b33ac3bad37f6610e199fe8f71416982b7f38ac2c80536df8f",
+  "recording_file_sha256": "bcaa6005fa4f64f8b29c8a30e9d805bffc900b519bd8969475c1b9fac9525817",
+  "renderer_sha256": "251d85ae9824fff915de615c33f2538ec8843ea028bdc13ca22b7f48d94d8bac",
+  "schema_version": 1
+}
