@@ -1,0 +1,39 @@
+[project]
+name = "code-pointer-backend-ai-intro"
+version = "0.1.0"
+description = "A recorded Backend.AI scheduling experiment for Code Pointer"
+requires-python = ">=3.13.18,<3.14"
+dependencies = [
+  "backend.ai-manager==26.9.7",
+  "backend.ai-agent==26.9.7",
+  "backend.ai-storage-proxy==26.9.7",
+  "backend.ai-client==26.9.7",
+  "pillow==13.0.0",
+]
+
+[project.scripts]
+backend-ai-intro = "backend_ai_intro.cli:main"
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "ruff==0.17.3",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/backend_ai_intro"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

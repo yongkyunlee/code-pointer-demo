@@ -1,0 +1,49 @@
+name: ${BACKEND_DEMO_PROJECT:-code-pointer-backend-ai-intro}
+services:
+  postgres:
+    image: postgres:16.3-alpine@sha256:36ed71227ae36305d26382657c0b96cbaf298427b3f1eaeb10d77a6dea3eec41
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${BACKEND_DEMO_DB_PASSWORD:?Run runtime_setup.py first}
+    ports:
+      - "127.0.0.1:28100:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "backend"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  valkey:
+    image: valkey/valkey:9.1.1-alpine@sha256:15568b9cb7eb67f4aed4de018c23f13d344e0e6437b31fe8fb8823dc81ebb3a9
+    ports:
+      - "127.0.0.1:28110:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.14@sha256:42106a001d1be7fd22e48830071ceae0fe760ff2c5df8c76c0e3b586d8a1f0fc
+    command:
+      - /usr/local/bin/etcd
+      - --name=demo
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://127.0.0.1:28120
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://127.0.0.1:2380
+      - --initial-cluster=demo=http://127.0.0.1:2380
+    ports:
+      - "127.0.0.1:28120:2379"
+    volumes:
+      - etcd-data:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+volumes:
+  postgres-data:
+  etcd-data:

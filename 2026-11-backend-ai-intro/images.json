@@ -1,0 +1,14 @@
+{
+  "aarch64": {
+    "name": "cr.backend.ai/stable/python:3.13-ubuntu24.04-arm64",
+    "manifest_digest": "sha256:f596cecf047ff7895f61f0d9751af86a73773103f03b048870219d1c48c1832f",
+    "config_digest": "sha256:be6945aa4b9f3f6eddbddf27f5fd8b43905e0fd3c7110ad08ab7663e14c06d4e",
+    "pinned_reference": "cr.backend.ai/stable/python@sha256:f596cecf047ff7895f61f0d9751af86a73773103f03b048870219d1c48c1832f"
+  },
+  "x86_64": {
+    "name": "cr.backend.ai/stable/python:3.13-ubuntu24.04-amd64",
+    "manifest_digest": "sha256:6554a2d80f4570aed627231ee5ea097560df6199610a7ce333e497adc464f1a8",
+    "config_digest": "sha256:8558166afdc7828ef210c58e8fabd99eb1da7253956e21bbb45a943ee72004ad",
+    "pinned_reference": "cr.backend.ai/stable/python@sha256:6554a2d80f4570aed627231ee5ea097560df6199610a7ce333e497adc464f1a8"
+  }
+}
