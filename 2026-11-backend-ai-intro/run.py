@@ -14,7 +14,6 @@ import contextlib
 import hashlib
 import json
 import os
-import platform
 import signal
 import subprocess
 import sys
@@ -24,7 +23,7 @@ from uuid import UUID
 
 from backend_ai_intro.cli import clear_generated_artifacts, save_artifacts
 from backend_ai_intro.live import LiveConfig, run_live_experiment
-from runtime_setup import PORTS, bootstrap, prepare
+from runtime_setup import PORTS, bootstrap, prepare, require_supported_live_host
 
 ROOT = Path(__file__).resolve().parent
 
@@ -44,6 +43,7 @@ def save_failure(output: Path, error: BaseException) -> None:
     if path.exists():
         recording = json.loads(path.read_text())
         recording["run_failure"] = {"type": type(error).__name__}
+        recording.setdefault("verification", {})["passed"] = False
         write_json(path, recording)
 
 
@@ -115,6 +115,26 @@ def cleanup_workload_containers(runtime: Path, ids: set[str], names: set[str]) -
     }
 
 
+def require_clean_project(compose: list[str], runtime: Path) -> None:
+    """Keep resources retained after an interrupted run available for recovery."""
+    project = json.loads((runtime / "credentials.json").read_text())["project_name"]
+    containers = command_output(*compose, "ps", "--all", "--quiet")
+    volumes = command_output(
+        "docker",
+        "volume",
+        "ls",
+        "--quiet",
+        "--filter",
+        f"label=com.docker.compose.project={project}",
+    )
+    if containers or volumes:
+        raise RuntimeError(
+            "This experiment still has infrastructure containers or data volumes from a previous "
+            "run. Recover or remove that run's workload containers and infrastructure before "
+            "retrying. Its resources and database have been preserved."
+        )
+
+
 @contextlib.contextmanager
 def environment(values: dict[str, str]) -> Iterator[None]:
     previous = {key: os.environ.get(key) for key in values}
@@ -147,6 +167,30 @@ def runtime_lock(runtime: Path) -> Iterator[None]:
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 
+class ExperimentInterrupted(KeyboardInterrupt):
+    """A termination signal requested normal, bounded experiment cleanup."""
+
+
+@contextlib.contextmanager
+def termination_signals() -> Iterator[None]:
+    """Let termination unwind cleanup, without a repeated signal aborting it."""
+    handled = (signal.SIGTERM, signal.SIGHUP)
+    previous = {number: signal.getsignal(number) for number in handled}
+
+    def interrupt(number: int, _frame: object) -> None:
+        for item in handled:
+            signal.signal(item, signal.SIG_IGN)
+        raise ExperimentInterrupted(f"Received {signal.Signals(number).name}; cleaning up")
+
+    try:
+        for number in handled:
+            signal.signal(number, interrupt)
+        yield
+    finally:
+        for number, handler in previous.items():
+            signal.signal(number, handler)
+
+
 @contextlib.contextmanager
 def services(runtime: Path) -> Iterator[None]:
     """Start and stop only children created by this invocation."""
@@ -170,11 +214,11 @@ def services(runtime: Path) -> Iterator[None]:
         yield
     finally:
         for child in reversed(children):
-            if child.poll() is None:
-                try:
-                    os.killpg(child.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
+            # A service leader can exit while its descendants keep the group alive.
+            try:
+                os.killpg(child.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
         for child in reversed(children):
             try:
                 child.wait(timeout=20)
@@ -184,18 +228,21 @@ def services(runtime: Path) -> Iterator[None]:
                 except ProcessLookupError:
                     pass
                 child.wait(timeout=5)
+            else:
+                # Reaping the leader does not prove its whole process group exited.
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
 
 def reproduce(output: Path, source: Path | None, timeout: float, *, scenario: str = "fifo") -> None:
     if scenario not in {"fifo", "idle"}:
         raise ValueError("Unknown live experiment")
-    if platform.system() not in {"Darwin", "Linux"}:
-        raise RuntimeError(
-            "The live setup supports macOS and Linux; use Linux through WSL on Windows"
-        )
+    require_supported_live_host()
     if not 5 <= timeout <= 3600:
         raise ValueError("stage_timeout must be between 5 and 3600 seconds")
-    with runtime_lock(ROOT / ".runtime"):
+    with termination_signals(), runtime_lock(ROOT / ".runtime"):
         output.mkdir(parents=True, exist_ok=True)
         clear_generated_artifacts(output, include_recording=True)
         write_json(output / "run-status.json", {"passed": False, "state": "running"})
@@ -234,6 +281,7 @@ def _reproduce(
         from backend_ai_intro.idle_setup import configure_runtime
 
         compose.extend(["-f", str(configure_runtime(runtime))])
+    require_clean_project(compose, runtime)
     output.mkdir(parents=True, exist_ok=True)
     compose_started = False
     owned_ids: set[str] = set()
@@ -250,7 +298,7 @@ def _reproduce(
         with (runtime / "logs/bootstrap.log").open("w") as log:
             metadata = bootstrap(runtime, log=log)
         credentials = json.loads((runtime / "credentials.json").read_text())["users"]["admin"]
-        architecture = "aarch64" if platform.machine() in {"arm64", "aarch64"} else "x86_64"
+        architecture = "aarch64"
         image = str(metadata["image"]["name"])
         pinned_image = str(metadata["image"]["pinned_reference"])
         print("Preparing the CPU workload image...", flush=True)

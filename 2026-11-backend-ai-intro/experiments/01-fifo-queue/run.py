@@ -4,9 +4,12 @@ import runpy
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[1]
-sys.path[:0] = [str(ROOT), str(ROOT / "src")]
-if "--output" not in sys.argv:
-    sys.argv.extend(["--output", str(HERE / "artifacts/live")])
-runpy.run_path(str(ROOT / "run.py"), run_name="__main__")
+if __name__ == "__main__":
+    here = Path(__file__).resolve().parent
+    root = here.parents[1]
+    sys.path[:0] = [str(root), str(root / "src")]
+    arguments = sys.argv[1:]
+    if not any(arg == "--output" or arg.startswith("--output=") for arg in arguments):
+        arguments.extend(["--output", str(here / "artifacts/live")])
+    sys.argv = [str(root / "run.py"), *arguments]
+    runpy.run_path(str(root / "run.py"), run_name="__main__")

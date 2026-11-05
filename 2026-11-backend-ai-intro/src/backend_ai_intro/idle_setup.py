@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import platform
 from pathlib import Path
 
 import tomlkit
@@ -31,13 +30,11 @@ def configure_runtime(runtime: Path) -> Path:
     manager["metric"] = {"addr": {"host": "127.0.0.1", "port": PROMETHEUS_PORT}}
     manager_path.write_text(tomlkit.dumps(manager))
     prometheus_path = runtime / "idle-prometheus.yml"
-    linux = platform.system() == "Linux"
-    scrape_target = "127.0.0.1:26013" if linux else "host.docker.internal:26013"
     prometheus_path.write_text(
         "global:\n  scrape_interval: 2s\n  evaluation_interval: 2s\n"
         "scrape_configs:\n  - job_name: backend-ai-demo-agent\n"
         "    metrics_path: /metrics\n    static_configs:\n"
-        f"      - targets: ['{scrape_target}']\n"
+        "      - targets: ['host.docker.internal:26013']\n"
     )
     prometheus_path.chmod(0o644)
     compose_path = runtime / "idle-compose.yaml"
@@ -69,13 +66,6 @@ def configure_runtime(runtime: Path) -> Path:
             },
         },
     }
-    if linux:
-        service = compose["services"]["prometheus"]
-        service.pop("ports")
-        service.pop("extra_hosts")
-        service["network_mode"] = "host"
-        service["command"].append(f"--web.listen-address=127.0.0.1:{PROMETHEUS_PORT}")
-        service["healthcheck"]["test"][-1] = f"http://127.0.0.1:{PROMETHEUS_PORT}/-/ready"
     compose_path.write_text(json.dumps(compose, indent=2) + "\n")
     provenance = {
         "compose_file": str(compose_path),

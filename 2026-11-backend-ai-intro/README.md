@@ -14,11 +14,11 @@ The live experiments use CPU resources on a laptop. The placement experiment use
 
 Requirements:
 
-- macOS or Linux, with Git and Docker Compose available.
-- A running local Docker engine accessed through a Unix socket, with at least four CPUs. On macOS, start Docker Desktop first. Remote Docker endpoints are not supported.
+- macOS ARM64 (Apple silicon), with Git and Docker Desktop available.
+- A running Docker Desktop engine accessed through a Unix socket, with at least four CPUs. Start Docker Desktop first. Remote Docker endpoints are not supported.
 - Approximately 6 GB of free disk space for Python packages, images, and runtime data. The workload image download is approximately 750 MB compressed.
 - Network access to GitHub, PyPI, Docker Hub, Quay, and `cr.backend.ai` for the first run.
-- [uv 0.13.7](https://docs.astral.sh/uv/getting-started/installation/) or a compatible newer version. The Python version is selected by `.python-version`.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/). The review reruns used uv `0.10.12`; the Python version is selected by `.python-version`.
 
 ```sh
 git clone https://github.com/yongkyunlee/code-pointer-demo.git
@@ -30,11 +30,13 @@ uv run --locked python experiments/02-placement-fragmentation/run.py
 uv run --locked python experiments/03-idle-reclamation/run.py
 ```
 
+Live setup is supported on macOS ARM64 with Docker Desktop, the environment used for the recorded end-to-end runs. Other host platforms are rejected before setup starts. The component experiments and recording replay do not start local services.
+
 The live scenario wrappers call the shared `run.py`, which creates isolated PostgreSQL, Valkey, and etcd containers, initializes Backend.AI from the pinned upstream fixtures, starts its manager, agent, and storage proxy, and performs the experiment. It terminates its own sessions and stops its own services afterward. It removes the experiment's database volumes; downloaded images remain cached for another run.
 
-If API termination fails, cleanup resolves this run's exact session names and IDs and checks their Docker labels before removing remaining workload containers. If ownership or removal cannot be verified, it preserves the infrastructure and database for recovery. A lock prevents concurrent runs in the same checkout.
+If API termination fails, cleanup resolves this run's exact session names and IDs and checks their Docker labels before removing remaining workload containers. If ownership or removal cannot be verified, it preserves the infrastructure and database for recovery. A lock prevents concurrent runs in the same checkout. A new run refuses to reuse infrastructure containers or data volumes retained from an interrupted attempt, so it cannot discard the database needed to identify those workloads. Recover the previous run before retrying. SIGTERM and SIGHUP enter the same bounded cleanup path as an exception; repeated termination signals are ignored while cleanup runs.
 
-Generated credentials, service logs, configuration, and the upstream source cache stay under the ignored `.runtime/` directory. Services listen on loopback. The setup does not modify shell profiles, the Docker configuration, or an existing Backend.AI installation. Use an otherwise idle local Docker engine for the experiment.
+Generated credentials, service logs, configuration, and the upstream source cache stay under the ignored `.runtime/` directory. The local API, metrics, metadata, and workload service listeners are restricted to loopback. The setup does not modify shell profiles, the Docker configuration, or an existing Backend.AI installation. Use an otherwise idle local Docker engine for the experiment.
 
 Each live wrapper saves output under its own `artifacts/live/` directory. The root `python run.py` command remains a shortcut for FIFO and writes `artifacts/live/` at the project root. Output includes:
 
@@ -52,6 +54,8 @@ Rendering does not need Docker or an active Backend.AI installation:
 ```sh
 uv run --locked backend-ai-intro render artifacts/live/recording.json --output artifacts/replay
 ```
+
+The November 5 review reruns are saved separately in each experiment's `recordings/` directory. They verify the corrected failure handling, process cleanup, active-worker checks, and physical vfolder deletion. Original recordings remain available.
 
 The original FIFO reference is now in `experiments/01-fifo-queue/recordings/macos-arm64/recording.json`. Its contents are unchanged. Each scenario README provides its replay command.
 

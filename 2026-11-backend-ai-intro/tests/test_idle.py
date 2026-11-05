@@ -132,3 +132,100 @@ def test_setup_changes_only_generated_config_and_pins_prometheus(tmp_path):
     service = json.loads(compose_path.read_text())["services"]["prometheus"]
     assert "@sha256:" in service["image"]
     assert "2s" in (tmp_path / "idle-prometheus.yml").read_text()
+
+
+def test_current_active_worker_must_survive_even_when_cpu_rate_is_high(tmp_path):
+    import asyncio
+    import contextlib
+    import io
+    import subprocess
+    import sys
+
+    from backend_ai_intro.idle import _IdleRecorder
+    from backend_ai_intro.live import LiveConfig
+
+    async def check(process):
+        class ExecutionSession:
+            async def execute(self, *, code, mode):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    exec(code, {"p": process})
+                return {
+                    "status": "finished",
+                    "exitCode": 0,
+                    "console": [["stdout", output.getvalue()]],
+                }
+
+        recorder = _IdleRecorder(
+            LiveConfig(endpoint="http://127.0.0.1:8080", image="test"),
+            tmp_path / "recording.json",
+            http=None,
+        )
+        recorder.sessions["active"] = ExecutionSession()
+        await recorder.verify_active_control(process.pid)
+
+    # A container can remain RUNNING and its five-minute rate stay high after
+    # this worker has exited. The fresh in-container check must still fail.
+    exited = subprocess.Popen([sys.executable, "-c", "pass"])
+    exited.wait(timeout=5)
+    assert _reclaimed(sample())
+    with pytest.raises(LiveExperimentError, match="expected result"):
+        asyncio.run(check(exited))
+    alive = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        asyncio.run(check(alive))
+    finally:
+        alive.terminate()
+        alive.wait(timeout=5)
+
+
+def test_folder_cleanup_waits_for_physical_deletion_before_purging():
+    import asyncio
+    from types import SimpleNamespace
+    from uuid import UUID
+
+    from backend_ai_intro.idle import _delete_saved_folder
+
+    folder_id = UUID(int=123)
+    events = []
+    statuses = iter(["delete-ongoing", "delete-complete"])
+
+    class Folder:
+        def __init__(self, name, *, id):
+            assert name == "owned" and id == folder_id
+
+        async def delete(self):
+            events.append("trash")
+
+        async def delete_trash(self):
+            events.append("request_storage_delete")
+
+        @classmethod
+        async def paginated_list(cls, *, fields, filter):
+            assert filter == f'id == "{folder_id}"'
+            status = next(statuses)
+            events.append(status)
+            return SimpleNamespace(items=[{"id": str(folder_id), "status": status}])
+
+        async def purge(self):
+            assert events[-1] == "delete-complete"
+            events.append("purge")
+
+    async def bounded(operation):
+        return await operation
+
+    recorder = SimpleNamespace(
+        data={"storage": {"creation_response": {"id": folder_id.hex}}},
+        config=SimpleNamespace(stage_timeout=5, poll_interval=0.001),
+        bounded=bounded,
+        action=lambda *args, **kwargs: None,
+    )
+    asyncio.run(_delete_saved_folder(recorder, SimpleNamespace(VFolder=Folder), "owned"))
+    assert events == [
+        "trash",
+        "request_storage_delete",
+        "delete-ongoing",
+        "delete-complete",
+        "purge",
+    ]
+    assert recorder.data["storage"]["deletion_status"] == "delete-complete"

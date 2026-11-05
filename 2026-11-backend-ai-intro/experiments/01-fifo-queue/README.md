@@ -26,3 +26,7 @@ uv run --locked backend-ai-intro render experiments/01-fifo-queue/recordings/mac
 ```
 
 The CPU component version remains available through `backend-ai-intro component`. It exercises the upstream provisioner with synthetic state and is separate from the live recording.
+
+## Review rerun
+
+The [November 5 review rerun](recordings/macos-arm64-review-20261105/) passed the strengthened FIFO and cleanup checks with 45 samples. The original recording remains available.

@@ -1,0 +1,9 @@
+{
+  "artifacts": {
+    "keyframe.png": "989fb39c08eba5bd091423cb7cde43a6a060a26a875a5d4f379b99e0d046d367",
+    "scheduler.gif": "33f4c6daf52b1a7cd1a2e64018b3e2d96a5a6d76c0dc4f3e23c785b6150a2914",
+    "storyboard.png": "2fb2c0716b066c95cd2bc27688dde07a134078d3e0b798ba6dc9a998ea23955b"
+  },
+  "recording_sha256": "32f5630db63a7b5d0bc530784b31e841378c9cd6dc6bb6aa3b8ee5472250ba8a",
+  "schema_version": 1
+}

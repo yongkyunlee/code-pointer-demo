@@ -93,3 +93,7 @@ uv run --locked pytest tests/test_fragmentation.py -q
 ```
 
 The upstream source entry points are [pool.py](https://github.com/lablup/backend.ai/blob/332a308e34c5c7bcd57939850fe032cfd8d8ca00/src/ai/backend/manager/sokovan/scheduler/provisioner/selectors/pool.py), [selector.py](https://github.com/lablup/backend.ai/blob/332a308e34c5c7bcd57939850fe032cfd8d8ca00/src/ai/backend/manager/sokovan/scheduler/provisioner/selectors/selector.py), [concentrated.py](https://github.com/lablup/backend.ai/blob/332a308e34c5c7bcd57939850fe032cfd8d8ca00/src/ai/backend/manager/sokovan/scheduler/provisioner/selectors/concentrated.py), [dispersed.py](https://github.com/lablup/backend.ai/blob/332a308e34c5c7bcd57939850fe032cfd8d8ca00/src/ai/backend/manager/sokovan/scheduler/provisioner/selectors/dispersed.py) and [tracker.py](https://github.com/lablup/backend.ai/blob/332a308e34c5c7bcd57939850fe032cfd8d8ca00/src/ai/backend/manager/sokovan/scheduler/provisioner/selectors/tracker.py).
+
+## Review rerun
+
+The [November 5 review rerun](recordings/review-20261105/) passed every strategy and request-order control. Original recordings remain unchanged.

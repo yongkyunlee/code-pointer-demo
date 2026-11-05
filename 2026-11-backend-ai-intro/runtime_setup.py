@@ -54,20 +54,20 @@ FIXTURES = (
 )
 
 
+def require_supported_live_host() -> None:
+    """Limit live service setup to the host configuration verified end to end."""
+    if platform.system() != "Darwin" or platform.machine().lower() not in {"arm64", "aarch64"}:
+        raise RuntimeError(
+            "Live experiments require macOS ARM64 with Docker Desktop. "
+            "Use the component experiments or replay saved recordings on other hosts."
+        )
+
+
 def workload_image() -> tuple[str, dict[str, str]]:
-    """Return the checked-in image pin for the native Docker architecture."""
-    machine = platform.machine().lower()
-    architectures = {
-        "arm64": "aarch64",
-        "aarch64": "aarch64",
-        "amd64": "x86_64",
-        "x86_64": "x86_64",
-    }
-    if machine not in architectures:
-        raise RuntimeError(f"Unsupported workload architecture: {machine}")
-    architecture = architectures[machine]
+    """Return the image pin used by the verified macOS ARM64 live setup."""
+    require_supported_live_host()
     pins = json.loads(Path(__file__).with_name("images.json").read_text())
-    return architecture, pins[architecture]
+    return "aarch64", pins["aarch64"]
 
 
 def upstream(source: Path, relative: str) -> str:
@@ -115,6 +115,7 @@ def address(port: int) -> dict[str, str | int]:
 
 
 def prepare(source: Path | None, runtime: Path, cpu_count: int) -> None:
+    require_supported_live_host()
     if cpu_count < 4:
         raise ValueError("Docker must expose at least four CPUs")
     runtime.mkdir(parents=True, exist_ok=True)
@@ -187,6 +188,7 @@ def prepare(source: Path | None, runtime: Path, cpu_count: int) -> None:
             "id": "code-pointer-cpu-worker",
             "rpc-listen-addr": address(PORTS["agent"]),
             "service-addr": address(PORTS["agent_metrics"]),
+            "metadata-server-bind-host": "127.0.0.1",
             "agent-sock-port": PORTS["agent_sock"],
             "announce-addr": address(PORTS["agent_metrics"]),
             "rpc-auth-manager-public-key": str(runtime / "keys/manager.key"),

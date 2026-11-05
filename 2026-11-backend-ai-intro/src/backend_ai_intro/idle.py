@@ -10,11 +10,13 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import os
+import re
 import time
 from decimal import Decimal, InvalidOperation
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from .idle_setup import (
     BASELINE_SECONDS,
@@ -310,6 +312,49 @@ class _IdleRecorder(_Recorder):
         self.save()
         return result
 
+    async def verify_active_control(self, pid: int) -> None:
+        # Five-minute CPU rates can stay high after the worker exits. Query the
+        # Popen object in the same interactive interpreter to verify current life.
+        await self.execute(
+            "active",
+            "print('ACTIVE_CONTROL_ALIVE='+str(p.pid) "
+            "if p.poll() is None else 'ACTIVE_CONTROL_EXITED')\n",
+            f"ACTIVE_CONTROL_ALIVE={pid}",
+        )
+
+
+async def _delete_saved_folder(recorder: _IdleRecorder, api: Any, name: str) -> None:
+    from ai.backend.client.output.fields import vfolder_fields
+
+    folder_id = UUID(recorder.data["storage"]["creation_response"]["id"])
+    folder = api.VFolder(name, id=folder_id)
+    await recorder.bounded(folder.delete())
+    recorder.action("cleanup", "move_vfolder_to_trash", "storage", name=name)
+    # delete() only moves the folder to trash. delete_trash() starts asynchronous
+    # storage deletion; services must remain alive until it actually completes.
+    await recorder.bounded(folder.delete_trash())
+    recorder.action("cleanup", "delete_vfolder_storage_requested", "storage", name=name)
+    async with asyncio.timeout(recorder.config.stage_timeout):
+        while True:
+            rows = await recorder.bounded(
+                api.VFolder.paginated_list(
+                    fields=(vfolder_fields["id"], vfolder_fields["status"]),
+                    filter=f'id == "{folder_id}"',
+                )
+            )
+            if len(rows.items) != 1 or UUID(rows.items[0]["id"]) != folder_id:
+                raise LiveExperimentError("Missing owned vfolder deletion status")
+            status = rows.items[0]["status"]
+            if status == "delete-complete":
+                break
+            if status not in {"delete-pending", "delete-ongoing"}:
+                raise LiveExperimentError(f"Unexpected vfolder deletion status: {status}")
+            await asyncio.sleep(recorder.config.poll_interval)
+    recorder.data["storage"]["deletion_status"] = status
+    recorder.action("cleanup", "delete_vfolder_storage_completed", "storage", name=name)
+    await recorder.bounded(folder.purge())
+    recorder.action("cleanup", "purge_vfolder_record", "storage", name=name)
+
 
 async def _cleanup(
     recorder: _IdleRecorder, api: Any, v2: Any, checker_id: Any, folder_name: str | None
@@ -368,8 +413,7 @@ async def _cleanup(
             errors.append({"stage": "observe_release", "type": type(error).__name__})
     if folder_name and (released or not recorder.sessions):
         try:
-            await recorder.bounded(api.VFolder(folder_name).delete())
-            recorder.action("cleanup", "delete_vfolder", "storage", name=folder_name)
+            await _delete_saved_folder(recorder, api, folder_name)
         except Exception as error:
             errors.append({"stage": "delete_vfolder", "type": type(error).__name__})
     recorder.data["cleanup"] = {"complete": not errors, "errors": errors}
@@ -480,7 +524,7 @@ async def _run(
                     "while time.monotonic()<deadline:\n"
                     "    value=hashlib.sha256(value).digest()\n"
                 )
-                await recorder.execute(
+                active_start = await recorder.execute(
                     "active",
                     (
                         "import subprocess, sys\n"
@@ -491,6 +535,11 @@ async def _run(
                     ),
                     "ACTIVE_PROCESS_STARTED=",
                 )
+                started = re.fullmatch(r"ACTIVE_PROCESS_STARTED=(\d+)\s*", active_start["console"])
+                if started is None:
+                    raise LiveExperimentError("Active control did not return its worker PID")
+                active_pid = int(started[1])
+                recorder.data["active_control_pid"] = active_pid
                 await recorder.create(api, "waiting")
                 await recorder.wait(
                     api,
@@ -511,6 +560,7 @@ async def _run(
                     await asyncio.sleep(max(config.poll_interval, 2))
                 if not _activity_contrast(sample):
                     raise LiveExperimentError("Baseline lacks measured active/idle contrast")
+                await recorder.verify_active_control(active_pid)
                 recorder.checkpoint(
                     "Policy off: work remains blocked",
                     sample,
@@ -535,8 +585,10 @@ async def _run(
                 )
                 enabled_at = time.monotonic()
                 sample = await recorder.wait(api, "automatic_reclamation", _reclaimed)
+                reclaimed_after = round(time.monotonic() - enabled_at, 3)
+                await recorder.verify_active_control(active_pid)
                 recorder.data["measurements"] = {
-                    "policy_on_to_waiting_running_seconds": round(time.monotonic() - enabled_at, 3),
+                    "policy_on_to_waiting_running_seconds": reclaimed_after,
                     "policy_off_observation_seconds": BASELINE_SECONDS,
                     "interpretation": "Observed timings include periodic checks and polling",
                 }

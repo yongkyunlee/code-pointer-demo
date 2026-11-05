@@ -10,10 +10,14 @@ from .render import INK, MUTED, PALETTE, _Canvas, _live_checkpoints
 
 
 def render_idle_recording(recording: Mapping[str, Any], output: Path) -> dict[str, Path]:
+    if "failure" in recording or "run_failure" in recording:
+        raise ValueError("A failed idle run cannot be rendered as verified evidence")
     if not recording.get("verification", {}).get("passed"):
         raise ValueError("Only a verified idle recording can be rendered")
     if not recording.get("cleanup", {}).get("complete"):
         raise ValueError("Idle experiment cleanup must be complete")
+    if not recording.get("environment_cleanup", {}).get("complete"):
+        raise ValueError("Idle experiment infrastructure cleanup must be complete")
     selected = _live_checkpoints(recording)
     frames = []
     for index, (checkpoint, sample) in enumerate(selected):
