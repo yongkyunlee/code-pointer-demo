@@ -22,11 +22,29 @@ from collections.abc import Iterator
 from pathlib import Path
 from uuid import UUID
 
-from backend_ai_intro.cli import save_artifacts
+from backend_ai_intro.cli import clear_generated_artifacts, save_artifacts
 from backend_ai_intro.live import LiveConfig, run_live_experiment
 from runtime_setup import PORTS, bootstrap, prepare
 
 ROOT = Path(__file__).resolve().parent
+
+
+def write_json(path: Path, data: dict) -> None:
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def save_failure(output: Path, error: BaseException) -> None:
+    """Record failure types without copying potentially private diagnostics."""
+    write_json(
+        output / "run-status.json", {"passed": False, "failure": {"type": type(error).__name__}}
+    )
+    path = output / "recording.json"
+    if path.exists():
+        recording = json.loads(path.read_text())
+        recording["run_failure"] = {"type": type(error).__name__}
+        write_json(path, recording)
 
 
 def command_output(*args: str, timeout: float = 30) -> str:
@@ -173,12 +191,28 @@ def reproduce(output: Path, source: Path | None, timeout: float) -> None:
         raise RuntimeError(
             "The live setup supports macOS and Linux; use Linux through WSL on Windows"
         )
+    if not 5 <= timeout <= 3600:
+        raise ValueError("stage_timeout must be between 5 and 3600 seconds")
     with runtime_lock(ROOT / ".runtime"):
-        _reproduce(output, source, timeout)
+        output.mkdir(parents=True, exist_ok=True)
+        clear_generated_artifacts(output, include_recording=True)
+        write_json(output / "run-status.json", {"passed": False, "state": "running"})
+        try:
+            _reproduce(output, source, timeout)
+        except BaseException as error:
+            save_failure(output, error)
+            raise
+        else:
+            write_json(output / "run-status.json", {"passed": True, "state": "complete"})
 
 
 def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
     runtime = ROOT / ".runtime"
+    docker_endpoint = command_output(
+        "docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"
+    )
+    if not docker_endpoint.startswith("unix:///"):
+        raise RuntimeError("Use a local Docker engine through a Unix socket for this experiment")
     cpu_count = int(command_output("docker", "info", "--format", "{{.NCPU}}"))
     prepare(source, runtime, cpu_count)
     compose = [
@@ -213,9 +247,6 @@ def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
         subprocess.run(["docker", "tag", pinned_image, image], check=True, timeout=30)
         inspection = json.loads(command_output("docker", "image", "inspect", image))[0]
         verify_image_identity(inspection, pinned_image)
-        docker_endpoint = command_output(
-            "docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"
-        )
         values = {
             "BACKEND_ACCESS_KEY": credentials["access_key"],
             "BACKEND_SECRET_KEY": credentials["secret_key"],
@@ -246,11 +277,30 @@ def _reproduce(output: Path, source: Path | None, timeout: float) -> None:
         }
     finally:
         if compose_started:
-            cleanup = cleanup_workload_containers(runtime, owned_ids, owned_names)
-            print("Removing this experiment's infrastructure and data volumes...", flush=True)
-            subprocess.run([*compose, "down", "--volumes"], check=True, timeout=120)
-            if recording is not None:
-                recording["environment_cleanup"] = cleanup
+            cleanup = {"complete": False, "stage": "workload_containers"}
+            try:
+                cleanup = cleanup_workload_containers(runtime, owned_ids, owned_names)
+                # Workload removal alone does not establish infrastructure cleanup.
+                cleanup["complete"] = False
+                cleanup["stage"] = "infrastructure"
+                print("Removing this experiment's infrastructure and data volumes...", flush=True)
+                subprocess.run([*compose, "down", "--volumes"], check=True, timeout=120)
+                cleanup["complete"] = True
+                cleanup["stage"] = "complete"
+            except BaseException as error:
+                cleanup["error"] = {"type": type(error).__name__}
+                raise
+            finally:
+                path = output / "recording.json"
+                if recording is None and path.exists():
+                    recording = json.loads(path.read_text())
+                if recording is not None:
+                    recording["environment_cleanup"] = cleanup
+                    if not cleanup["complete"]:
+                        recording.setdefault("verification", {})["passed"] = False
+                    write_json(path, recording)
+                # Setup can fail before the recorder creates its first sample.
+                write_json(output / "environment-cleanup.json", cleanup)
     if recording is not None:
         save_artifacts(recording, output)
         print(f"Recorded and rendered the experiment in {output}", flush=True)

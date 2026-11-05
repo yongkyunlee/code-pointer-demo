@@ -8,10 +8,28 @@ import json
 from pathlib import Path
 
 
+def clear_generated_artifacts(output: Path, *, include_recording: bool = False) -> None:
+    """Invalidate prior outputs without removing unrelated files or directories.
+
+    A new attempt must not leave an earlier run's successful visualization next
+    to its partial recording. Replay keeps its input recording by default.
+    """
+    names = {"scheduler.gif", "storyboard.png", "keyframe.png", "manifest.json"}
+    evidence = {"recording.json", "run-status.json", "environment-cleanup.json"}
+    if include_recording:
+        names |= evidence
+    names |= {f".{name}.tmp" for name in names}
+    if include_recording:
+        names |= {f"{name}.tmp" for name in evidence}
+    for name in names:
+        (output / name).unlink(missing_ok=True)
+
+
 def save_artifacts(recording: dict, output: Path) -> dict[str, Path]:
     """Save the evidence first, then draw only from that saved JSON."""
 
     output.mkdir(parents=True, exist_ok=True)
+    clear_generated_artifacts(output)
     path = output / "recording.json"
     temporary = output / ".recording.json.tmp"
     temporary.write_text(json.dumps(recording, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -23,19 +41,24 @@ def replay(recording_path: Path, output: Path) -> dict[str, Path]:
     """Render a recording and bind the generated files to its content hash."""
     from .render import render_recording
 
+    clear_generated_artifacts(output)
     raw = recording_path.read_bytes()
     recording = json.loads(raw)
-    paths = render_recording(recording, output)
-    manifest = {
-        "schema_version": 1,
-        "recording_sha256": hashlib.sha256(raw).hexdigest(),
-        "artifacts": {
-            path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in paths.values()
-        },
-    }
-    (output / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    try:
+        paths = render_recording(recording, output)
+        manifest = {
+            "schema_version": 1,
+            "recording_sha256": hashlib.sha256(raw).hexdigest(),
+            "artifacts": {
+                path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in paths.values()
+            },
+        }
+        (output / "manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    except BaseException:
+        clear_generated_artifacts(output)
+        raise
     return paths
 
 
@@ -51,6 +74,7 @@ def main() -> None:
     if args.command == "component":
         from .experiment import run_experiment
 
+        clear_generated_artifacts(args.output, include_recording=True)
         paths = save_artifacts(run_experiment(), args.output)
     else:
         paths = replay(args.recording, args.output)

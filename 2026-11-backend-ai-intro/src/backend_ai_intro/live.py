@@ -455,19 +455,24 @@ class _Recorder:
         return sample
 
     async def wait(
-        self, api: Any, stage: str, predicate: Callable[[dict[str, Any]], bool]
+        self,
+        api: Any,
+        stage: str,
+        predicate: Callable[[dict[str, Any]], bool],
+        *,
+        allow_error_states: bool = False,
     ) -> dict[str, Any]:
         try:
             async with asyncio.timeout(self.config.stage_timeout):
                 while True:
                     sample = await self.sample(api, stage)
-                    if predicate(sample):
-                        return sample
                     for session in sample["sessions"]:
-                        if session["status"] == "ERROR":
+                        if session["status"] == "ERROR" and not allow_error_states:
                             raise LiveExperimentError(
                                 f"Session {session['id']} entered ERROR during {stage}"
                             )
+                    if predicate(sample):
+                        return sample
                     await asyncio.sleep(self.config.poll_interval)
         except TimeoutError as error:
             raise LiveExperimentError(
@@ -495,19 +500,74 @@ def _running_with_cpu(sample: dict[str, Any], label: str, cpu: int) -> bool:
     return item["status"] == "RUNNING" and _cpu(item["occupied_slots"]) == cpu
 
 
-def _skipped_while_pending(sample: dict[str, Any]) -> bool:
+def _pending_schedule_result(row: dict[str, Any], result: str) -> bool:
     return (
-        _session(sample, "alice")["status"] == "PENDING"
-        and _session(sample, "bob")["status"] == "PENDING"
-        and _cpu(sample["agent"]["occupied_slots"]) == 2
-        and any(
-            row["result"] == "SKIPPED"
-            and row.get("phase") == "schedule-sessions"
-            and row.get("from_status") == "PENDING"
-            and row.get("to_status") == "PENDING"
-            for row in sample["latest_scheduling_history"].get("bob", [])
-        )
+        row.get("result") == result
+        and row.get("phase") == "schedule-sessions"
+        and row.get("from_status") == "PENDING"
+        and row.get("to_status") == "PENDING"
     )
+
+
+def _fifo_pass(row: dict[str, Any]) -> tuple[str, str] | None:
+    """The pinned scheduler shares this sequencing step across one scheduling pass."""
+    for step in row.get("sub_steps", []):
+        if (
+            step.get("step") == "FIFOSequencer"
+            and step.get("result") == "SUCCESS"
+            and step.get("started_at")
+            and step.get("ended_at")
+        ):
+            return step["started_at"], step["ended_at"]
+    return None
+
+
+def _alice_cpu_shortfall(row: dict[str, Any]) -> bool:
+    if not _pending_schedule_result(row, "NEED_RETRY"):
+        return False
+    steps = row.get("sub_steps", [])
+    if not any(
+        step.get("step") == "ResourcePolicyValidator" and step.get("result") == "SUCCESS"
+        for step in steps
+    ) or not any(
+        step.get("step") == "resource" and step.get("result") == "FAILURE" for step in steps
+    ):
+        return False
+    # Backend.AI 26.9.7 reports deficits in the selector's message, not a typed field.
+    # Reject additional deficits so memory or another resource cannot explain the wait.
+    deficits = re.findall(r"^\s*- ([^:\n]+): missing=(.+)$", row.get("message") or "", re.M)
+    if len(deficits) != 1 or deficits[0][0] != "cpu":
+        return False
+    try:
+        return Decimal(deficits[0][1].rstrip(")")) == 2
+    except InvalidOperation:
+        return False
+
+
+def _skipped_while_pending(sample: dict[str, Any]) -> bool:
+    alice = _session(sample, "alice")
+    if not (
+        _running_with_cpu(sample, "current", 2)
+        and alice["status"] == "PENDING"
+        and _session(sample, "bob")["status"] == "PENDING"
+        and _cpu(sample["agent"]["available_slots"]) == 4
+        and _cpu(sample["agent"]["occupied_slots"]) == 2
+    ):
+        return False
+    history = sample["latest_scheduling_history"]
+    alice_attempts = [row for row in history.get("alice", []) if _alice_cpu_shortfall(row)]
+    for row in history.get("bob", []):
+        if not _pending_schedule_result(row, "SKIPPED"):
+            continue
+        if row.get("message") != (
+            "Not attempted: the resource group ran out of resources at the earlier session "
+            f"{alice['session_id']}"
+        ):
+            continue
+        fifo_pass = _fifo_pass(row)
+        if fifo_pass and any(_fifo_pass(attempt) == fifo_pass for attempt in alice_attempts):
+            return True
+    return False
 
 
 @asynccontextmanager
@@ -605,8 +665,8 @@ async def _run(
                 recorder.checkpoint(
                     "Alice and Bob pending",
                     sample,
-                    "Bob has a SKIPPED history record while Alice and Bob remain PENDING; "
-                    "the agent reports two of four CPU slots used",
+                    "Alice passed policy validation but lacked two CPU slots; "
+                    "the same FIFO pass skipped Bob behind Alice while Current remained RUNNING",
                 )
                 await recorder.terminate("current", "end_current")
                 sample = await recorder.wait(
@@ -614,7 +674,7 @@ async def _run(
                     "alice_running",
                     lambda row: (
                         _running_with_cpu(row, "alice", 4)
-                        and _session(row, "current")["status"] in TERMINAL_STATES
+                        and _session(row, "current")["status"] == "TERMINATED"
                         and _cpu(_session(row, "current")["occupied_slots"]) == 0
                         and _session(row, "bob")["status"] == "PENDING"
                         and _cpu(row["agent"]["occupied_slots"]) == 4
@@ -632,7 +692,7 @@ async def _run(
                     "bob_running",
                     lambda row: (
                         _running_with_cpu(row, "bob", 1)
-                        and _session(row, "alice")["status"] in TERMINAL_STATES
+                        and _session(row, "alice")["status"] == "TERMINATED"
                         and _cpu(_session(row, "alice")["occupied_slots"]) == 0
                         and _cpu(row["agent"]["occupied_slots"]) == 1
                     ),
@@ -700,6 +760,7 @@ async def _run(
                                 )
                                 and _cpu(row["agent"]["occupied_slots"]) == 0
                             ),
+                            allow_error_states=not recorder.data["verification"]["passed"],
                         )
                         recorder.checkpoint(
                             "All allocations released",

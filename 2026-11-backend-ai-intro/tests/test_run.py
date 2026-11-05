@@ -270,7 +270,11 @@ def test_cleanup_failure_preserves_compose_database_for_recovery(runner, tmp_pat
         raise OSError("Injected Docker cleanup failure")
 
     monkeypatch.setattr(runner, "ROOT", tmp_path)
-    monkeypatch.setattr(runner, "command_output", lambda *_args: "4")
+    monkeypatch.setattr(
+        runner,
+        "command_output",
+        lambda *_args: "unix:///tmp/test-docker.sock" if "context" in _args else "4",
+    )
     monkeypatch.setattr(runner, "prepare", prepare)
     monkeypatch.setattr(runner, "bootstrap", fail_bootstrap)
     monkeypatch.setattr(runner, "cleanup_workload_containers", fail_cleanup)
@@ -280,3 +284,127 @@ def test_cleanup_failure_preserves_compose_database_for_recovery(runner, tmp_pat
     assert len(commands) == 1
     assert "up" in commands[0]
     assert not any("down" in command for command in commands)
+
+
+@pytest.mark.parametrize("timeout", [-1, 0, 4, 3601, float("nan"), float("inf")])
+def test_invalid_timeout_fails_before_lock_or_docker(runner, tmp_path, monkeypatch, timeout):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+    monkeypatch.setattr(runner, "_reproduce", lambda *_args: pytest.fail("Run must not start"))
+    with pytest.raises(ValueError, match="stage_timeout"):
+        runner.reproduce(tmp_path / "output", None, timeout)
+    assert not (tmp_path / ".runtime").exists()
+    assert not (tmp_path / "output").exists()
+
+
+def test_failed_rerun_discards_old_success_artifacts_and_preserves_unrelated_files(
+    runner, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+    output = tmp_path / "output"
+    output.mkdir()
+    for name in (
+        "recording.json",
+        "scheduler.gif",
+        "storyboard.png",
+        "keyframe.png",
+        "manifest.json",
+        "environment-cleanup.json",
+    ):
+        (output / name).write_text("old successful run")
+    (output / "my-notes.txt").write_text("keep")
+
+    def fail(*_args):
+        raise RuntimeError("a diagnostic containing a secret")
+
+    monkeypatch.setattr(runner, "_reproduce", fail)
+    with pytest.raises(RuntimeError):
+        runner.reproduce(output, None, 30)
+    assert sorted(path.name for path in output.iterdir()) == ["my-notes.txt", "run-status.json"]
+    assert (output / "my-notes.txt").read_text() == "keep"
+    assert json.loads((output / "run-status.json").read_text()) == {
+        "passed": False,
+        "failure": {"type": "RuntimeError"},
+    }
+
+
+def test_outer_failure_preserves_experiment_checks_without_copying_diagnostics(
+    runner, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+    output = tmp_path / "output"
+
+    def fail(output, *_args):
+        (output / "recording.json").write_text(json.dumps({"verification": {"passed": True}}))
+        raise OSError("private diagnostic")
+
+    monkeypatch.setattr(runner, "_reproduce", fail)
+    with pytest.raises(OSError):
+        runner.reproduce(output, None, 30)
+    recording = json.loads((output / "recording.json").read_text())
+    assert recording == {"verification": {"passed": True}, "run_failure": {"type": "OSError"}}
+    assert "private diagnostic" not in (output / "run-status.json").read_text()
+
+
+@pytest.mark.parametrize(
+    "endpoint", ["ssh://remote", "tcp://127.0.0.1:2375", "npipe:////./pipe/docker_engine"]
+)
+def test_remote_or_unsupported_docker_endpoint_rejected_before_setup(
+    runner, tmp_path, monkeypatch, endpoint
+):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+    monkeypatch.setattr(runner, "command_output", lambda *_args: endpoint)
+    monkeypatch.setattr(
+        runner, "prepare", lambda *_args: pytest.fail("Must reject before preparing")
+    )
+    with pytest.raises(RuntimeError, match="local Docker engine"):
+        runner._reproduce(tmp_path / "output", None, 30)
+
+
+@pytest.mark.parametrize("failure_stage", ["workload_containers", "infrastructure"])
+def test_cleanup_failure_persists_result_and_does_not_render(
+    runner, tmp_path, monkeypatch, failure_stage
+):
+    monkeypatch.setattr(runner, "ROOT", tmp_path)
+    output = tmp_path / "output"
+    output.mkdir()
+    (output / "recording.json").write_text(json.dumps({"verification": {"passed": True}}))
+    commands = []
+
+    def prepare(_source, runtime, _cpu_count):
+        (runtime / "logs").mkdir(parents=True)
+
+    def bootstrap(*_args, **_kwargs):
+        raise RuntimeError("bootstrap failure")
+
+    def cleanup(*_args):
+        if failure_stage == "workload_containers":
+            raise OSError("private cleanup diagnostic")
+        return {"complete": True, "checked_session_count": 0, "removed_container_count": 0}
+
+    def command(args, **_kwargs):
+        commands.append(args)
+        if "down" in args:
+            raise OSError("private teardown diagnostic")
+
+    monkeypatch.setattr(
+        runner,
+        "command_output",
+        lambda *_args: "unix:///tmp/docker.sock" if "context" in _args else "4",
+    )
+    monkeypatch.setattr(runner, "prepare", prepare)
+    monkeypatch.setattr(runner, "bootstrap", bootstrap)
+    monkeypatch.setattr(runner, "cleanup_workload_containers", cleanup)
+    monkeypatch.setattr(runner.subprocess, "run", command)
+    monkeypatch.setattr(
+        runner, "save_artifacts", lambda *_args: pytest.fail("Do not render failure")
+    )
+    with pytest.raises(OSError):
+        runner._reproduce(output, None, 30)
+    recording = json.loads((output / "recording.json").read_text())
+    outcome = recording["environment_cleanup"]
+    assert outcome["complete"] is False
+    assert outcome["stage"] == failure_stage
+    assert outcome["error"] == {"type": "OSError"}
+    assert recording["verification"]["passed"] is False
+    assert json.loads((output / "environment-cleanup.json").read_text()) == outcome
+    assert any("down" in args for args in commands) == (failure_stage == "infrastructure")

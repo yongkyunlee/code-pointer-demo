@@ -3,7 +3,9 @@
 import asyncio
 import json
 from contextlib import asynccontextmanager
+from copy import deepcopy
 from datetime import timedelta
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -73,26 +75,80 @@ def test_invalid_resource_json_is_rejected():
         live._slots("{not JSON}", "slots")
 
 
-def test_capacity_check_requires_an_actual_skipped_history_record():
-    sample = {
-        "sessions": [{"id": name, "status": "PENDING"} for name in ("alice", "bob")],
-        "agent": {"occupied_slots": {"cpu": "2"}},
-        "latest_scheduling_history": {"bob": [{"result": "FAILURE"}]},
-    }
-    assert not live._skipped_while_pending(sample)
-    sample["latest_scheduling_history"]["bob"] = [
-        {
-            "result": "SKIPPED",
-            "phase": "another-phase",
-            "from_status": "PENDING",
-            "to_status": "PENDING",
-        }
-    ]
-    assert not live._skipped_while_pending(sample)
-    sample["latest_scheduling_history"]["bob"][0]["phase"] = "schedule-sessions"
-    assert live._skipped_while_pending(sample)
-    sample["sessions"][1]["status"] = "SCHEDULED"
-    assert not live._skipped_while_pending(sample)
+@pytest.fixture
+def blocked_sample():
+    """Mutate the saved API evidence to exercise false-positive checks."""
+    path = Path(__file__).parents[1] / "recordings/macos-arm64/recording.json"
+    recording = json.loads(path.read_text())
+    checkpoint = next(
+        item for item in recording["checkpoints"] if item["label"] == "Alice and Bob pending"
+    )
+    return deepcopy(recording["samples"][checkpoint["sample_sequence"]])
+
+
+def test_reference_recording_proves_fifo_cpu_shortfall(blocked_sample):
+    assert live._skipped_while_pending(blocked_sample)
+
+
+@pytest.mark.parametrize("result", ["FAILURE", "SUCCESS"])
+def test_capacity_check_requires_an_actual_skipped_history_record(blocked_sample, result):
+    blocked_sample["latest_scheduling_history"]["bob"][0]["result"] = result
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+def test_unrelated_phase_does_not_prove_a_fifo_skip(blocked_sample):
+    blocked_sample["latest_scheduling_history"]["bob"][0]["phase"] = "another-phase"
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+@pytest.mark.parametrize("label,status", [("current", "ERROR"), ("bob", "SCHEDULED")])
+def test_queue_checkpoint_requires_current_running_and_waiters_pending(
+    blocked_sample, label, status
+):
+    live._session(blocked_sample, label)["status"] = status
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+def test_skip_without_alices_resource_failure_is_insufficient(blocked_sample):
+    blocked_sample["latest_scheduling_history"]["alice"] = []
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "  - mem: missing=2 GiB",
+        "  - cpu: missing=1.000000",
+        "  - cpu: missing=2.000000\n  - mem: missing=1 GiB",
+        "  - cpu: missing=not-a-number",
+    ],
+)
+def test_other_resource_failures_do_not_prove_the_claimed_cpu_shortfall(blocked_sample, message):
+    blocked_sample["latest_scheduling_history"]["alice"][0]["message"] = message
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+def test_failed_quota_validation_does_not_prove_capacity_only_blocking(blocked_sample):
+    row = blocked_sample["latest_scheduling_history"]["alice"][0]
+    next(step for step in row["sub_steps"] if step["step"] == "ResourcePolicyValidator")[
+        "result"
+    ] = "FAILURE"
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+def test_skip_must_name_alice_as_the_earlier_session(blocked_sample):
+    blocked_sample["latest_scheduling_history"]["bob"][0]["message"] = (
+        "Not attempted: the resource group ran out of resources at the earlier session unrelated"
+    )
+    assert not live._skipped_while_pending(blocked_sample)
+
+
+def test_skip_and_cpu_failure_must_come_from_the_same_fifo_pass(blocked_sample):
+    row = blocked_sample["latest_scheduling_history"]["bob"][0]
+    next(step for step in row["sub_steps"] if step["step"] == "FIFOSequencer")["started_at"] = (
+        "2026-11-05T00:00:00Z"
+    )
+    assert not live._skipped_while_pending(blocked_sample)
 
 
 def test_allocated_session_is_not_treated_as_running():
@@ -117,6 +173,33 @@ def test_stage_timeout_cancels_a_stalled_sample(tmp_path, monkeypatch):
             await asyncio.wait_for(recorder.wait(None, "test-stage", lambda _: False), timeout=1)
 
     asyncio.run(run())
+
+
+def test_stage_error_cannot_be_hidden_by_a_successful_predicate(tmp_path, monkeypatch):
+    recorder = live._Recorder(config(), tmp_path / "recording.json")
+
+    async def sample(*_args):
+        return {"sessions": [{"id": "current", "status": "ERROR"}]}
+
+    monkeypatch.setattr(recorder, "sample", sample)
+    with pytest.raises(live.LiveExperimentError, match="entered ERROR"):
+        asyncio.run(recorder.wait(None, "alice_running", lambda _: True))
+
+
+def test_cleanup_can_observe_errors_after_an_already_failed_experiment(tmp_path, monkeypatch):
+    recorder = live._Recorder(config(), tmp_path / "recording.json")
+    observation = {"sessions": [{"id": "current", "status": "ERROR"}]}
+
+    async def sample(*_args):
+        return observation
+
+    monkeypatch.setattr(recorder, "sample", sample)
+    assert (
+        asyncio.run(
+            recorder.wait(None, "cleanup_released", lambda _: True, allow_error_states=True)
+        )
+        == observation
+    )
 
 
 def test_saved_diagnostics_redact_credentials(tmp_path, monkeypatch):
@@ -302,8 +385,9 @@ def test_failure_cleanup_only_terminates_sessions_owned_by_this_run(tmp_path, mo
         recorder.sessions[label] = owned
         raise live.LiveExperimentError("Injected failure after creation")
 
-    async def cleanup_sample(recorder, _api, stage, predicate):
+    async def cleanup_sample(recorder, _api, stage, predicate, *, allow_error_states):
         assert stage == "cleanup_released"
+        assert allow_error_states is True
         sample = {
             "sequence": 0,
             "sessions": [{"id": "current", "status": owned.status, "occupied_slots": {"cpu": "0"}}],
@@ -362,8 +446,9 @@ def test_cleanup_uses_known_terminal_observations_without_rest_lookups(tmp_path,
         recorder.data["samples"].append(sample())
         raise live.LiveExperimentError("Injected failure after terminal observations")
 
-    async def cleanup_sample(recorder, _api, stage, predicate):
+    async def cleanup_sample(recorder, _api, stage, predicate, *, allow_error_states):
         assert stage == "cleanup_released"
+        assert allow_error_states is True
         observation = sample()
         assert predicate(observation)
         recorder.data["samples"].append(observation)

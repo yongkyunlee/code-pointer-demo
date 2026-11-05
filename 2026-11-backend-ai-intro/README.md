@@ -15,7 +15,7 @@ Alice and Bob are workload labels. The live experiment submits all three session
 Requirements:
 
 - macOS or Linux, with Git and Docker Compose available.
-- A running local Docker engine with at least four CPUs. On macOS, start Docker Desktop first.
+- A running local Docker engine accessed through a Unix socket, with at least four CPUs. On macOS, start Docker Desktop first. Remote Docker endpoints are not supported.
 - Approximately 6 GB of free disk space for Python packages, images, and runtime data. The workload image download is approximately 750 MB compressed.
 - Network access to GitHub, PyPI, Docker Hub, Quay, and `cr.backend.ai` for the first run.
 - [uv 0.13.7](https://docs.astral.sh/uv/getting-started/installation/) or a compatible newer version. The Python version is selected by `.python-version`.
@@ -38,8 +38,9 @@ The default output is `artifacts/live/`:
 - `recording.json` contains observed API samples, operator actions, scheduling history, checkpoints, checks, and cleanup results. Partial evidence is saved if a stage fails.
 - `scheduler.gif`, `storyboard.png`, and `keyframe.png` are derived from selected samples in that recording.
 - `manifest.json` records the source JSON hash and the generated artifact hashes.
+- `run-status.json` records whether the complete run succeeded, including setup and rendering. `environment-cleanup.json` records the workload-container and infrastructure cleanup outcome when cleanup was attempted.
 
-Every stage has a timeout. A failed prerequisite, unexpected scheduler response, unsuccessful startup, or incomplete cleanup causes a nonzero exit. Inspect `.runtime/logs/` and the partial recording when a run fails. These logs are private runtime diagnostics and are not intended for publication.
+Every stage has a timeout. A failed prerequisite, unexpected scheduler response, unsuccessful startup, or incomplete cleanup causes a nonzero exit. A new run replaces the known generated files in its output directory, so failed attempts cannot leave an earlier successful GIF beside new evidence. Use a different `--output` directory to retain previous runs. Inspect `run-status.json`, any partial recording and cleanup report, and `.runtime/logs/` when a run fails. These logs are private runtime diagnostics and are not intended for publication.
 
 ## Replay a recording
 
@@ -79,7 +80,9 @@ Image registration still reads the upstream version tag and verifies its metadat
 
 The setup converts the pinned example fixture's `shared_memory` strings to integers for its BIGINT database field. This adjusts input formatting and does not modify the upstream scheduler.
 
-The tests exercise real scheduling decisions in the component experiment and cover recording validation, rendering, timeout handling, credential redaction, and cleanup ownership at the live API boundary. A successful test suite does not substitute for the live run.
+The live check requires Alice to pass policy validation and fail placement with a two-CPU shortfall. Bob must be skipped behind Alice in the same FIFO pass while Current remains running. Normal release checks require `TERMINATED`; a session entering `ERROR` fails the experiment.
+
+The tests exercise real scheduling decisions in the component experiment and cover recording validation, rendering, timeout handling, credential redaction, cleanup ownership, and failed reruns at the live API boundary. A successful test suite does not substitute for the live run.
 
 ## Source layout
 
