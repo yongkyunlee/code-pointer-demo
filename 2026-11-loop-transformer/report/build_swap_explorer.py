@@ -66,6 +66,14 @@ def records(archive):
                                                   correct=original, target=target,
                                                   digit=family["total"]//10, target_digit=clean["target_digit"],
                                                   carry=clean["carry"], rows=rows))
+    # Both columns must describe the same donor and recipient for every setting.
+    for lang in LANGUAGES:
+        for i, (ouro, qwen) in enumerate(zip(data["ouro"][lang], data["qwen"][lang], strict=True)):
+            if any(ouro[k] != qwen[k] for k in ("pair", "total", "correct", "target", "carry")):
+                raise ValueError(f"Recipient mismatch across checkpoints for {lang} family {i}")
+            for left, right in zip(ouro["rows"], qwen["rows"], strict=True):
+                if (left["donor"], left["donor_lang"]) != (right["donor"], right["donor_lang"]):
+                    raise ValueError(f"Donor mismatch across checkpoints for {lang} family {i}")
     return data
 
 
@@ -74,7 +82,7 @@ CSS = """
 .cp-swap { --sw-ink:#172c2b; --sw-teal:#164f4b; --sw-muted:#475d58; --sw-line:#c8d4cc; container-type:inline-size; font:inherit; color:var(--sw-ink); background:#fffdf9; border:1px solid var(--sw-line); border-radius:.7rem; padding:clamp(.8rem,2.5vw,1.45rem); margin:1.2rem 0; }
 .cp-swap * { box-sizing:border-box; }
 .cp-swap [hidden] { display:none!important; }
-.cp-swap .sw-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; padding:0; margin:0 0 1.15rem; border:0; min-width:0; }
+.cp-swap .sw-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; padding:0; margin:0 0 1.15rem; border:0; min-width:0; }
 .cp-swap .sw-controls label,.cp-swap .sw-col { display:block; font-size:.86em; color:var(--sw-muted); font-weight:650; }
 .cp-swap select { min-height:2.7rem; width:100%; max-width:100%; font:inherit; font-size:1rem; color:var(--sw-ink); background:#fffdf9; border:1px solid #718d84; border-radius:.35rem; padding:.34rem .4rem; margin-top:.28rem; }
 .cp-swap select:focus-visible { outline:3px solid var(--sw-teal); outline-offset:2px; }
@@ -99,10 +107,17 @@ CSS = """
 .cp-swap .sw-line:last-child { border-top:2px solid #546f64; font-weight:700; padding-top:.07em; }
 .cp-swap .sw-calc { line-height:1.4; margin:.35rem 0 0; text-align:center; font:600 clamp(.75rem,2.1cqw,.96rem)/1.45 ui-monospace,SFMono-Regular,Consolas,monospace; }
 .cp-swap .sw-empty { min-height:100%; display:grid; place-content:center; text-align:center; border:1px dashed var(--sw-line); border-radius:.5rem; padding:.65rem; color:var(--sw-muted); }
-.cp-swap .sw-readout { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-block:1px solid var(--sw-line); margin:.8rem 0; padding:.75rem 0; gap:.5rem; }
-.cp-swap .sw-readout>div+div { border-left:1px solid var(--sw-line); padding-left:.7rem; }
-.cp-swap .sw-readout strong { display:block; color:var(--sw-teal); font:600 clamp(1.35rem,3.5cqw,2rem)/1.13 Georgia,serif; overflow-wrap:anywhere; }
-.cp-swap .sw-readout .sw-col { font-size:.8em; margin-bottom:.25rem; }
+.cp-swap .sw-prediction { margin:.9rem 0 .65rem; color:var(--sw-ink); }
+.cp-swap .sw-prediction strong { color:var(--sw-teal); }
+.cp-swap table.sw-both { width:100%; table-layout:fixed; border-collapse:collapse; line-height:1.35; }
+.cp-swap .sw-both th,.cp-swap .sw-both td { padding:.45rem .55rem; border-bottom:1px solid var(--sw-line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+.cp-swap .sw-both th:first-child { width:30%; }
+.cp-swap .sw-both tbody th { font-size:.84em; font-weight:600; }
+.cp-swap .sw-both thead th { font-size:.92em; color:var(--sw-teal); background:#edf4ee; }
+.cp-swap .sw-both .sw-measured { font-weight:650; color:var(--sw-teal); font-variant-numeric:tabular-nums; }
+.cp-swap .sw-both caption { text-align:left; font-weight:650; padding:.35rem 0 .55rem; }
+.cp-swap .sw-trace-picker { display:flex; align-items:baseline; flex-wrap:wrap; gap:.6rem; margin:.7rem 0; }
+.cp-swap .sw-trace-picker select { width:auto; margin:0; }
 .cp-swap .sw-comparison { margin:.8rem 0 0; }
 .cp-swap .sw-comparison summary { color:var(--sw-teal); cursor:pointer; font-weight:650; }
 .cp-swap .sw-meta,.cp-swap .sw-guide { color:var(--sw-muted); margin:.45rem 0; line-height:1.45; font-size:.88em; }
@@ -118,10 +133,8 @@ CSS = """
 .cp-swap .sw-sr { position:absolute!important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 @container (max-width:34rem) {
   .cp-swap .sw-controls { grid-template-columns:1fr 1fr; }
-  .cp-swap .sw-controls label:last-child { grid-column:1/-1; }
+  .cp-swap .sw-both th,.cp-swap .sw-both td { padding:.4rem .22rem; font-size:.84em; }
   .cp-swap .sw-board-title { flex-direction:column; }
-  .cp-swap .sw-readout>div+div { padding-left:.4rem; }
-  .cp-swap .sw-readout .sw-col { font-size:.76em; }
   .cp-swap .sw-results,.cp-swap .sw-results tbody { display:block; }
   .cp-swap .sw-results thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .cp-swap .sw-results tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.1rem .8rem; padding:.6rem 0; border-top:1px solid var(--sw-line); }
@@ -169,7 +182,30 @@ def addition_board(role, pair, lang):
     )
 
 
-def render(data):
+def model_comparison(data):
+    rows = []
+    sites = {
+        "ouro": "Shared block 24 on pass 3 (visit 72 of 96)",
+        "qwen": "Distinct block 21 of 28",
+    }
+    for measure, label in (("site", "End of stage 3"), ("clean", "Clean first word"),
+                           ("recorded", "First word with this setting"), ("delta", "Change in word margin")):
+        cells = []
+        for key in MODELS:
+            runs = data[key]["English"][0]["rows"]
+            values = {"site": sites[key], "clean": runs[0]["word"],
+                      "recorded": runs[2]["word"], "delta": signed(runs[2]["delta"])}
+            tracked = ' data-field="recorded"' if measure == "recorded" and key == "ouro" else ""
+            css = ' class="sw-measured"' if measure in ("recorded", "delta") else ""
+            cells.append(f'<td data-out="{key}-{measure}"{tracked}{css}>{esc(values[measure])}</td>')
+        rows.append(f'<tr><th scope="row">{label}</th>{"".join(cells)}</tr>')
+    return ('<table class="sw-both"><caption>Both models on the selected prompt</caption><thead><tr>'
+            '<th scope="col">Measurement</th><th scope="col">Looped<span class="sw-small">Ouro-1.4B</span></th>'
+            '<th scope="col">Regular<span class="sw-small">Qwen2.5-1.5B</span></th></tr></thead><tbody>'
+            + "".join(rows) + "</tbody></table>")
+
+
+def render(data, architecture_path=""):
     first = data["ouro"]["English"][0]
     names = [("Clean", "Original prompt"), *((title, sub) for _, title, sub in CONDITIONS)]
     table = []
@@ -196,7 +232,6 @@ def render(data):
     prediction = f"{a // 10} + {b // 10} + {donor_carry} = {first['target_digit']}"
     selectors = (
         '<fieldset class="sw-controls" hidden><legend class="sw-sr">Choose a recorded swap</legend>'
-        f'<label>Checkpoint<select data-select="model">{options((k,v[0]) for k,v in MODELS.items())}</select></label>'
         f'<label>Recipient language<select data-select="lang">{options((k,k) for k in LANGUAGES)}</select></label>'
         f'<label>Held-out family<select data-select="family">{family_options}</select></label></fieldset>'
     )
@@ -206,7 +241,7 @@ def render(data):
     return CSS + f"""
 <div class="cp-swap" role="region" aria-label="Recorded stage-three carry swaps">
 {selectors}
-<p class="sw-meta" data-field="intro">Ouro-1.4B · stage 3 · shared block 24 · family 000 · English</p>
+<p class="sw-meta" data-field="selection">Family 000 · English · Opposite carry · other language</p>
 <div class="sw-picker" hidden><label for="sw-condition">Intervention</label>
 <select id="sw-condition" data-select="condition">
 <option value="0">Clean prompt</option>
@@ -214,6 +249,7 @@ def render(data):
 <option value="2" selected>Opposite carry · other language</option>
 <option value="3">Same carry · sham swap</option>
 </select></div>
+{architecture_path}
 <div class="sw-pair">
 {addition_board("Donor",selected['donor'],selected['donor_lang'])}
 <div class="sw-empty" data-part="empty-donor" hidden>Clean prompt<br>Original state</div>
@@ -221,19 +257,17 @@ def render(data):
 {addition_board("Recipient",first['pair'],"English")}
 </div>
 <p class="sw-meta" data-field="operation">The run replaced the recipient’s whole hidden state at its last prompt token with the donor’s state. If only the carry transferred, the recipient would keep its own tens operands.</p>
-<div class="sw-readout">
-  <div><span class="sw-col">Clean first word</span><strong data-field="clean-output">{esc(first['rows'][0]['word'])}</strong>
-    <span class="sw-small" data-field="clean-correct">Correct word · {esc(first['correct'])}</span></div>
-  <div><span class="sw-col" data-field="prediction-label">Carry-only prediction</span><strong data-field="prediction">{esc(first['target'])}</strong>
-    <span class="sw-small" data-field="tens-calculation">{esc(prediction)}</span></div>
-  <div><span class="sw-col">Recorded first word</span><strong data-field="recorded">{esc(selected['word'])}</strong>
-    <span class="sw-small" data-field="recorded-info">{esc(selected['info'])}</span></div>
-</div>
-<details class="sw-comparison"><summary>Compare all four runs and their scores</summary>
+<p class="sw-prediction"><span data-field="prediction-label">Carry-only prediction</span> · <strong data-field="prediction">{esc(first['target'])}</strong>
+  (<span data-field="tens-calculation">{esc(prediction)}</span>). Correct tens word · <strong data-field="clean-correct">{esc(first['correct'])}</strong>.</p>
+{model_comparison(data)}
+<p class="sw-guide">A positive change means the full word <b data-field="margin-target">{esc(first['target'])}</b> gained log probability relative to <b data-field="margin-original">{esc(first['correct'])}</b>, compared with that model’s clean prompt.</p>
+<details class="sw-comparison"><summary>Inspect all four settings for one checkpoint</summary>
+<label class="sw-trace-picker" hidden>Detailed scores for <select data-select="model">{options((key,v[0]) for key,v in MODELS.items())}</select></label>
+<p class="sw-meta" data-field="intro">Ouro-1.4B · family 000 · English</p>
 <table class="sw-results" role="table"><caption class="sw-sr">Greedy first words and full-word scores after changing one answer-position state</caption>
 <thead><tr><th scope="col">Condition</th><th scope="col">Donor</th><th scope="col">First word</th><th scope="col" class="sw-num">Margin</th><th scope="col" class="sw-num">Change</th></tr></thead>
 <tbody>{''.join(table)}</tbody></table>
-<p class="sw-guide">All four margins compare the opposite-carry word with the correct word, even for the sham. The margin is the log probability of <b data-field="margin-target">{esc(first['target'])}</b> minus the log probability of <b data-field="margin-original">{esc(first['correct'])}</b>. Change is relative to the clean prompt. Scores include every token of each word and use natural logarithms.</p></details>
+<p class="sw-guide">Each margin uses the opposite-carry word minus the correct word, including in the same-carry sham. Scores include every token of each word and use natural logarithms.</p></details>
 <p class="sw-sr" aria-live="polite" aria-atomic="true" data-field="status"></p>
 <template class="sw-records">{data_json}</template>
 {SCRIPT}
@@ -271,7 +305,7 @@ SCRIPT = """
     const lang = choice("lang").value;
     const family = Number(choice("family").value);
     const rec = records[model][lang][family];
-    const label = model === "ouro" ? "Ouro-1.4B · stage 3 · shared block 24" : "Qwen2.5-1.5B · stage 3 · block 21";
+    const label = choice("model").selectedOptions[0].text;
     const status = label + " · family " + String(family).padStart(3, "0") + " · " + lang;
     field("intro").textContent = status;
     const condition = Number(choice("condition").value);
@@ -287,13 +321,23 @@ SCRIPT = """
     const [left, right] = rec.pair.map(value => Math.floor(value/10));
     const predictedDigit = left + right + carry;
     const predictedWord = predictedDigit === rec.digit ? rec.correct : rec.target;
-    field("clean-output").textContent = rec.rows[0].word;
-    field("clean-correct").textContent = "Correct word · " + rec.correct;
+    field("clean-correct").textContent = rec.correct;
     field("prediction-label").textContent = row.donor ? "Carry-only prediction" : "Arithmetic prediction";
     field("prediction").textContent = predictedWord;
     field("tens-calculation").textContent = left + " + " + right + " + " + carry + " = " + predictedDigit;
-    field("recorded").textContent = row.word;
-    field("recorded-info").textContent = row.info;
+    const words = [];
+    for (const [key, byLanguage] of Object.entries(records)) {
+      const runs = byLanguage[lang][family].rows;
+      const output = measure => root.querySelector('[data-out="' + key + '-' + measure + '"]');
+      output("clean").textContent = runs[0].word;
+      const result = output("recorded");
+      result.textContent = runs[condition].word;
+      if (key === model) result.dataset.field = "recorded";
+      else result.removeAttribute("data-field");
+      output("delta").textContent = num(runs[condition].delta);
+      words.push((key === "ouro" ? "Ouro" : "Qwen") + " said " + runs[condition].word);
+    }
+    field("selection").textContent = "Family " + String(family).padStart(3, "0") + " · " + lang + " · " + choice("condition").selectedOptions[0].text;
     field("margin-target").textContent = rec.target;
     field("margin-original").textContent = rec.correct;
     root.querySelectorAll(".sw-results tbody tr").forEach((tr, i) => {
@@ -305,10 +349,12 @@ SCRIPT = """
       field("margin",tr).textContent = num(item.margin);
       field("delta",tr).textContent = num(item.delta);
     });
-    field("status").textContent = status + ". " + choice("condition").selectedOptions[0].text + ". Prediction " + predictedWord + ". Recorded first word " + row.word + ".";
+    field("status").textContent = status + ". " + choice("condition").selectedOptions[0].text + ". Prediction " + predictedWord + ". " + words.join(". ") + ".";
   }
   root.querySelector(".sw-controls").addEventListener("change", update);
   choice("condition").addEventListener("change", update);
+  choice("model").addEventListener("change", update);
+  root.querySelector(".sw-trace-picker").hidden = false;
   root.querySelector(".sw-controls").hidden = false;
   root.querySelector(".sw-picker").hidden = false;
 })();

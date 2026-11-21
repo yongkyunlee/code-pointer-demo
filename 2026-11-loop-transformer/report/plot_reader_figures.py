@@ -68,7 +68,7 @@ def carry_figure(read, out):
             for seed in seeds for arch in ("tied", "untied")}
     fig = plt.figure(figsize=(5, 3.8))
     label(fig, .045, .926, "Swapping a state at four depths", size=15.2, weight="bold")
-    label(fig, .045, .845, "Tied minus untied change in target margin (logits)", size=9.6, color=MUTED)
+    label(fig, .045, .845, "Looped minus regular change in target margin (logits)", size=9.6, color=MUTED)
     ax = fig.add_axes([.18, .236, .65, .528])
     ax.set(xlim=(-.32, .46), ylim=(3.55, -.53))
     for spine in ax.spines.values():
@@ -125,7 +125,7 @@ def cue_figure(read, out):
         spine.set_visible(False)
     ax.set_xticks([0, 25, 50, 75, 100])
     ax.set_xticklabels(["0", "25", "50", "75", "100"])
-    ax.set_yticks([.38, 2.38], ["Ouro-1.4B", "Qwen2.5-1.5B"])
+    ax.set_yticks([.38, 2.38], ["Ouro-1.4B\n(looped)", "Qwen2.5-1.5B\n(regular)"])
     ax.tick_params(axis="both", length=0, labelsize=9.5, pad=7)
     for item in ax.get_yticklabels():
         item.set_fontweight("bold")

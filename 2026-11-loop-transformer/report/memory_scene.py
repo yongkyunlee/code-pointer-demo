@@ -161,7 +161,7 @@ def render(archive: ZipFile) -> str:
                 else:
                     cell = f'<td>{winner}<span class="mc-sr"> incorrect</span></td>'
                 cells.append(cell)
-            rows.append(f'<tr><th class="mc-model" scope="row">{model_label}</th>{"".join(cells)}</tr>')
+            rows.append(f'<tr><th class="mc-model" scope="row">{"Looped" if model == "ouro" else "Regular"} · {model_label}</th>{"".join(cells)}</tr>')
         rows.append('</tbody>')
     return f"""{CSS}{feedback_style}
 <section class="cp-memory-scene" id="cp-memory-scene" aria-labelledby="mc-scene-title">

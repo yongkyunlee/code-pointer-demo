@@ -59,6 +59,7 @@ def token_label(text):
 def results_for(key, label, rows, summaries):
     cards = []
     for model, name in MODELS:
+        architecture = "Looped" if model == "ouro" else "Regular"
         row = rows[model]
         value = row["scores"][key]
         right, wrong = (item[0] for item in row["answers"])
@@ -66,7 +67,7 @@ def results_for(key, label, rows, summaries):
         summary = summaries[model]
         mean = summary["estimates"][key + ".margin"]["mean"]
         cards.append(
-            f'<section class="lk-result"><h5>{name}</h5><dl>'
+            f'<section class="lk-result"><h5>{architecture} · {name}</h5><dl>'
             f'<div><dt>Scene margin</dt><dd class="lk-score">{signed(value["margin"])}</dd></div>'
             f'<div><dt>Higher-ranked fruit</dt><dd>{escape(preferred)}</dd></div>'
             f'<div><dt>Greedy next token</dt><dd>“{token_label(value["top_text"])}”</dd></div>'
@@ -154,7 +155,7 @@ CSS = """
 """
 
 
-def render(archive: ZipFile) -> str:
+def render(archive: ZipFile, architecture_path: str = "") -> str:
     rows, summaries = records(archive)
     scene = rows["ouro"]["scene"]
     target = escape(scene["people"][0])
@@ -164,7 +165,7 @@ def render(archive: ZipFile) -> str:
     for key, label, _ in CONDITIONS:
         checked = " checked" if key == "intact" else ""
         options.append(f'<label><input type="radio" name="lk-mask" id="lk-{key}" value="{key}"'
-                       f' aria-controls="lk-route lk-results"{checked}><span>{label}</span></label>')
+                       f' aria-controls="lk-route path-locker lk-results"{checked}><span>{label}</span></label>')
     lanes = "".join(
         f'<div class="lk-lane lk-s{stage}" data-stage="{stage}"><small>Stage {stage}</small>'
         '<span class="lk-gate"><span class="lk-go">Open</span><span class="lk-stop">× Blocked</span>'
@@ -182,12 +183,13 @@ def render(archive: ZipFile) -> str:
   {record_card(scene, 2)}
  </div>
  <p class="lk-explain">At a blocked visit, the two outlined locker descriptions in copy 2 cannot read the highlighted clue in copy 1. Every word stays in the prompt. The final question can still attend to both copies.</p>
+ {architecture_path}
  <div class="lk-results" id="lk-results" aria-live="polite" aria-atomic="true">
   <h4 class="lk-result-title">Final answer with this mask</h4>{results}
  </div>
  <p class="lk-foot">The margin compares “{correct}” with “{other}” in logits. A positive value favors {correct}. The greedy next token is the model’s first choice across its full vocabulary. The symbol ␠ marks a space.</p>
- <details><summary>Read the original prompt and block numbers</summary>
+ <details><summary>Read the original prompt</summary>
  <p class="lk-prompt">{escape(rows['ouro']['prompt'].strip())}</p>
- <p class="lk-prompt">Ouro visits shared block 12 at depths {summaries['ouro']['executed_blocks_1_based'][0]} and {summaries['ouro']['executed_blocks_1_based'][1]}. Qwen visits distinct blocks {summaries['qwen']['executed_blocks_1_based'][0]} and {summaries['qwen']['executed_blocks_1_based'][1]}.</p></details>
+</details>
 </section>
 """

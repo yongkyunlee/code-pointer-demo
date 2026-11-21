@@ -7,6 +7,8 @@ from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 from build_swap_explorer import records, render
+from architecture_path import render as architecture_path
+from training_comparison import render as training_comparison
 from locker_scene import render as locker_scene
 from memory_scene import render as memory_scene
 from stage_map import render as stage_map
@@ -62,8 +64,11 @@ def main():
         html = html.replace("{{EFFECT_TABLE}}", stage_table(summary))
         html = html.replace("{{STAGE_MAP}}", stage_map(summary))
         html = html.replace("{{MEMORY_SCENE}}", memory_scene(archive))
-        html = html.replace("{{LOCKER_SCENE}}", locker_scene(archive))
-    html = html.replace("{{SWAP_EXPLORER}}", render(records(args.archive)))
+        carry_path = architecture_path(archive, "carry")
+        html = html.replace("{{MEMORY_PATH}}", architecture_path(archive, "memory"))
+        html = html.replace("{{LOCKER_SCENE}}", locker_scene(archive, architecture_path(archive, "locker")))
+        html = html.replace("{{TRAINING_COMPARISON}}", training_comparison(summary))
+    html = html.replace("{{SWAP_EXPLORER}}", render(records(args.archive), carry_path))
     args.output.write_text(html, encoding="utf-8")
 
 
