@@ -1,0 +1,462 @@
+{
+  "jobs": {
+    "ouro-carry-pilot": {
+      "status": "verified",
+      "receipt_sha256": "2311a72bc17e2a54ab5765c72a255628c0d430867c810288015f543376ece309",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 855.514872953,
+        "peak_allocated_bytes": 3286508032,
+        "peak_reserved_bytes": 3485466624
+      },
+      "n_families": 24,
+      "family_data_sha256": "40d4354217c6ccf9fa0ef8a154505a44528e41b326b9f3e3672b32f62ce6fd87",
+      "measurements": {
+        "English digit accuracy": 0.9166666666666666,
+        "English greedy correct word": 0.9166666666666666,
+        "English malformed": 0.0,
+        "English correct word probability": 0.2920216111192215,
+        "French digit accuracy": 0.16666666666666666,
+        "French greedy correct word": 0.16666666666666666,
+        "French malformed": 0.16666666666666666,
+        "French correct word probability": 0.08286457882283925
+      }
+    },
+    "ouro-memory-pilot": {
+      "status": "verified",
+      "receipt_sha256": "dc1156d611b395244d73bf0adb57ab440f18c9c3e9717f3e1ce2a254a0d32557",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 0.980429547999961,
+        "peak_allocated_bytes": 2877826048,
+        "peak_reserved_bytes": 3084910592
+      },
+      "n_families": 24,
+      "family_data_sha256": "fcef1061d3ec3321afb01d507db432a2ba0440c412d0d51dbba26c7aabb3bd61",
+      "measurements": {
+        "people/one/direct/stage4": 0.3055555555555555,
+        "people/one/memory/stage4": 0.3055555555555555,
+        "people/late_world_intrusion": {
+          "mean": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "families": 24
+        },
+        "registers/one/direct/stage4": 0.4861111111111111,
+        "registers/one/memory/stage4": 0.2916666666666667,
+        "registers/late_world_intrusion": {
+          "mean": 0.041666666666666664,
+          "ci95": [
+            0.0,
+            0.10416666666666667
+          ],
+          "families": 24
+        },
+        "two_room_gate_passed": false
+      }
+    },
+    "ouro-cue-pilot": {
+      "status": "verified",
+      "receipt_sha256": "d0af9de0859d182bbd73bd5d1b92b96d95ce483edfc72932d1778254c6057b4d",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 59.78008045899992,
+        "peak_allocated_bytes": 2881506816,
+        "peak_reserved_bytes": 3084910592
+      },
+      "n_families": 24,
+      "family_data_sha256": "0b2516a4d0f111c421a2f15100a77096a2dca838b4b61eb0323139598a67a00d",
+      "measurements": {
+        "target_interaction": {
+          "mean": 0.0068359375,
+          "lo": 0.0006510416666666666,
+          "hi": 0.013020833333333334
+        },
+        "sham_interaction": {
+          "mean": 0.0032552083333333335,
+          "lo": -0.0016276041666666667,
+          "hi": 0.007486979166666667
+        },
+        "nearby_interaction": {
+          "mean": 0.0021158854166666665,
+          "lo": -0.005859375,
+          "hi": 0.010091145833333334
+        },
+        "duplication_gain": {
+          "mean": 1.6153971354166667,
+          "lo": 0.9295206705729167,
+          "hi": 2.303751627604167
+        },
+        "all_layers_cost": {
+          "mean": 0.6739908854166666,
+          "lo": 0.28840738932291665,
+          "hi": 1.1219319661458333
+        },
+        "intact.candidate_accuracy": {
+          "mean": 0.9166666666666666,
+          "lo": 0.7916666666666666,
+          "hi": 1.0
+        }
+      }
+    },
+    "qwen-carry-pilot": {
+      "status": "verified",
+      "receipt_sha256": "230e647ea7d07c7064fb33f1d6bcb3398f9834f29a071bc4b9340e4ef838b402",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 217.899978412,
+        "peak_allocated_bytes": 3227751424,
+        "peak_reserved_bytes": 3317694464
+      },
+      "n_families": 24,
+      "family_data_sha256": "40d4354217c6ccf9fa0ef8a154505a44528e41b326b9f3e3672b32f62ce6fd87",
+      "measurements": {
+        "English digit accuracy": 0.25,
+        "English greedy correct word": 0.25,
+        "English malformed": 0.0,
+        "English correct word probability": 0.14665051719049413,
+        "French digit accuracy": 0.25,
+        "French greedy correct word": 0.25,
+        "French malformed": 0.041666666666666664,
+        "French correct word probability": 0.11081190993866889
+      }
+    },
+    "qwen-memory-pilot": {
+      "status": "verified",
+      "receipt_sha256": "ed8a77092777728c87488bd79fcde47c5ec6b584f1c8ca0f05311d8e7f4ef08c",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 0.9869365900000275,
+        "peak_allocated_bytes": 3096997376,
+        "peak_reserved_bytes": 3204448256
+      },
+      "n_families": 24,
+      "family_data_sha256": "fcef1061d3ec3321afb01d507db432a2ba0440c412d0d51dbba26c7aabb3bd61",
+      "measurements": {
+        "people/one/direct/stage4": 0.47222222222222215,
+        "people/one/memory/stage4": 0.3194444444444444,
+        "people/late_world_intrusion": {
+          "mean": 0.125,
+          "ci95": [
+            -0.020833333333333332,
+            0.2916666666666667
+          ],
+          "families": 24
+        },
+        "registers/one/direct/stage4": 0.4583333333333333,
+        "registers/one/memory/stage4": 0.3333333333333333,
+        "registers/late_world_intrusion": {
+          "mean": 0.0,
+          "ci95": [
+            -0.22916666666666666,
+            0.22916666666666666
+          ],
+          "families": 24
+        },
+        "two_room_gate_passed": false
+      }
+    },
+    "qwen-cue-pilot": {
+      "status": "verified",
+      "receipt_sha256": "4b9dbfce9d2e988aa663f4fa4da09e86a7eaa1a5d51ebd32a2e92c40d43d4a52",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 18.582284804999972,
+        "peak_allocated_bytes": 3101911040,
+        "peak_reserved_bytes": 3204448256
+      },
+      "n_families": 24,
+      "family_data_sha256": "0b2516a4d0f111c421a2f15100a77096a2dca838b4b61eb0323139598a67a00d",
+      "measurements": {
+        "target_interaction": {
+          "mean": 0.001953125,
+          "lo": -0.0022786458333333335,
+          "hi": 0.006510416666666667
+        },
+        "sham_interaction": {
+          "mean": -0.001953125,
+          "lo": -0.005533854166666667,
+          "hi": 0.0016276041666666667
+        },
+        "nearby_interaction": {
+          "mean": -0.0029296875,
+          "lo": -0.007486979166666667,
+          "hi": 0.0022786458333333335
+        },
+        "duplication_gain": {
+          "mean": 0.2744140625,
+          "lo": -0.041666666666666664,
+          "hi": 0.6126383463541667
+        },
+        "all_layers_cost": {
+          "mean": 0.0927734375,
+          "lo": -0.10189615885416665,
+          "hi": 0.2887776692708335
+        },
+        "intact.candidate_accuracy": {
+          "mean": 0.5,
+          "lo": 0.2916666666666667,
+          "hi": 0.7083333333333334
+        }
+      }
+    },
+    "ouro-carry-heldout": {
+      "status": "verified",
+      "receipt_sha256": "fd4e4f58b2a0580a87e1869b8d2d76c1827d681ab1ede389e9685b66951c65ab",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 3543.7353414340005,
+        "peak_allocated_bytes": 3286508032,
+        "peak_reserved_bytes": 3485466624
+      },
+      "n_families": 100,
+      "family_data_sha256": "645640d11fb0a703be291d206eeb20692b54a9cf6623644d7b3ee5fc413ab1eb",
+      "measurements": {
+        "English digit accuracy": 0.98,
+        "English greedy correct word": 0.98,
+        "English malformed": 0.01,
+        "English correct word probability": 0.3042305821203414,
+        "French digit accuracy": 0.1,
+        "French greedy correct word": 0.1,
+        "French malformed": 0.26,
+        "French correct word probability": 0.07522271973914728
+      }
+    },
+    "ouro-memory-heldout": {
+      "status": "verified",
+      "receipt_sha256": "c00fe1ebc8846ea00d6949442ae67620e7ffda060a73bbb838f0daebc991813b",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 731.3805750409997,
+        "peak_allocated_bytes": 2883187712,
+        "peak_reserved_bytes": 3084910592
+      },
+      "n_families": 120,
+      "family_data_sha256": "38cd0b606272123bbf007d30a93a4f99892929786c6bafa433dc2e83cfb6b16e",
+      "measurements": {
+        "people/one/direct/stage4": 0.39722222222222214,
+        "people/one/memory/stage4": 0.32222222222222213,
+        "people/late_world_intrusion": {
+          "mean": -0.004166666666666667,
+          "ci95": [
+            -0.029166666666666667,
+            0.016666666666666666
+          ],
+          "families": 120
+        },
+        "registers/one/direct/stage4": 0.49166666666666664,
+        "registers/one/memory/stage4": 0.33333333333333326,
+        "registers/late_world_intrusion": {
+          "mean": 0.0,
+          "ci95": [
+            -0.0125,
+            0.0125
+          ],
+          "families": 120
+        },
+        "two_room_gate_passed": false
+      }
+    },
+    "ouro-cue-heldout": {
+      "status": "verified",
+      "receipt_sha256": "410fe90b797b162b520883d1552537deb05e65b77eca8e62de7ce5aba1bec034",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 224.4945684899999,
+        "peak_allocated_bytes": 2881506816,
+        "peak_reserved_bytes": 3084910592
+      },
+      "n_families": 100,
+      "family_data_sha256": "e67d655c41b22950f8c0a6e05fad3c1d75aa3fced624ef6d8befa2dbac4e87a5",
+      "measurements": {
+        "target_interaction": {
+          "mean": 0.002109375,
+          "lo": 0.00015625,
+          "hi": 0.004375
+        },
+        "sham_interaction": {
+          "mean": 0.00203125,
+          "lo": -0.000546875,
+          "hi": 0.0046875
+        },
+        "nearby_interaction": {
+          "mean": -0.000625,
+          "lo": -0.0031269531249999995,
+          "hi": 0.001875
+        },
+        "duplication_gain": {
+          "mean": 0.5803125,
+          "lo": 0.24523046875,
+          "hi": 0.935958984375
+        },
+        "all_layers_cost": {
+          "mean": 0.3041015625,
+          "lo": 0.1405615234375,
+          "hi": 0.489109375
+        },
+        "intact.candidate_accuracy": {
+          "mean": 0.93,
+          "lo": 0.88,
+          "hi": 0.97
+        }
+      }
+    },
+    "qwen-carry-heldout": {
+      "status": "verified",
+      "receipt_sha256": "15e91bdc4c70f2e009dca9acf8c99f59b7e16ea855c7d3fac2e612563ab551e1",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 900.1615796649999,
+        "peak_allocated_bytes": 3227751424,
+        "peak_reserved_bytes": 3317694464
+      },
+      "n_families": 100,
+      "family_data_sha256": "645640d11fb0a703be291d206eeb20692b54a9cf6623644d7b3ee5fc413ab1eb",
+      "measurements": {
+        "English digit accuracy": 0.27,
+        "English greedy correct word": 0.27,
+        "English malformed": 0.0,
+        "English correct word probability": 0.1535986878042209,
+        "French digit accuracy": 0.17,
+        "French greedy correct word": 0.17,
+        "French malformed": 0.0,
+        "French correct word probability": 0.11755703703341698
+      }
+    },
+    "qwen-memory-heldout": {
+      "status": "verified",
+      "receipt_sha256": "ad03e2ba188bcbe4268d55b1f0455e9f7a22fc1c2312536714e16dece6b3eb45",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 235.84616195399985,
+        "peak_allocated_bytes": 3103585792,
+        "peak_reserved_bytes": 3204448256
+      },
+      "n_families": 120,
+      "family_data_sha256": "38cd0b606272123bbf007d30a93a4f99892929786c6bafa433dc2e83cfb6b16e",
+      "measurements": {
+        "people/one/direct/stage4": 0.4666666666666666,
+        "people/one/memory/stage4": 0.325,
+        "people/late_world_intrusion": {
+          "mean": 0.05,
+          "ci95": [
+            -0.029166666666666667,
+            0.12916666666666668
+          ],
+          "families": 120
+        },
+        "registers/one/direct/stage4": 0.475,
+        "registers/one/memory/stage4": 0.3277777777777777,
+        "registers/late_world_intrusion": {
+          "mean": 0.06666666666666667,
+          "ci95": [
+            -0.029166666666666667,
+            0.1625
+          ],
+          "families": 120
+        },
+        "two_room_gate_passed": false
+      }
+    },
+    "qwen-cue-heldout": {
+      "status": "verified",
+      "receipt_sha256": "30cddd5dd7a53b8c7b185269cba6e308f4246416b20aa8722542a3317e2e386a",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 66.77627749600015,
+        "peak_allocated_bytes": 3101911040,
+        "peak_reserved_bytes": 3204448256
+      },
+      "n_families": 100,
+      "family_data_sha256": "e67d655c41b22950f8c0a6e05fad3c1d75aa3fced624ef6d8befa2dbac4e87a5",
+      "measurements": {
+        "target_interaction": {
+          "mean": -0.000625,
+          "lo": -0.0028125,
+          "hi": 0.0015625
+        },
+        "sham_interaction": {
+          "mean": -0.001953125,
+          "lo": -0.00421875,
+          "hi": 0.0003125
+        },
+        "nearby_interaction": {
+          "mean": -0.00125,
+          "lo": -0.00328125,
+          "hi": 0.000859375
+        },
+        "duplication_gain": {
+          "mean": 0.233203125,
+          "lo": 0.078431640625,
+          "hi": 0.39187890625
+        },
+        "all_layers_cost": {
+          "mean": 0.103828125,
+          "lo": 0.009994140625000002,
+          "hi": 0.199376953125
+        },
+        "intact.candidate_accuracy": {
+          "mean": 0.55,
+          "lo": 0.45,
+          "hi": 0.65
+        }
+      }
+    },
+    "paired-training-control": {
+      "status": "verified",
+      "receipt_sha256": "6ab6e17380e511a47b977134af99788abf997606d11d57f03daf5247f2b74ead",
+      "hardware": {
+        "gpu": "Tesla T4",
+        "elapsed_seconds": 240.43563468600007,
+        "peak_allocated_bytes": 63163904,
+        "peak_reserved_bytes": 71303168
+      },
+      "n_seeds": 3,
+      "parameters": {
+        "tied": 97113,
+        "untied": 347481,
+        "untied_budget": 91865
+      },
+      "measurements": {
+        "carry": {
+          "mean": -0.5440391230707368,
+          "low": -0.8145966743380199,
+          "high": -0.28640543263946466,
+          "clusters": 23,
+          "by_seed": [
+            -0.3657325888052583,
+            -0.5617872793227434,
+            -0.7045975010842085
+          ]
+        },
+        "memory": {
+          "mean": 0.005208333333333334,
+          "low": -0.028011067708333334,
+          "high": 0.0390625,
+          "clusters": 128,
+          "by_seed": [
+            0.03515625,
+            -0.015625,
+            -0.00390625
+          ]
+        },
+        "cue": {
+          "mean": -6.286241114139557e-05,
+          "low": -0.00010824331831403825,
+          "high": -2.341397727529208e-05,
+          "clusters": 126,
+          "by_seed": [
+            -4.0650367736816406e-05,
+            -6.352737545967102e-05,
+            -8.440949022769928e-05
+          ]
+        }
+      }
+    }
+  },
+  "counts": {
+    "verified": 13
+  }
+}
