@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from build_swap_explorer import records, render
 from architecture_path import render as architecture_path
 from training_comparison import render as training_comparison
+from depth_view import render as depth_view
 from locker_scene import render as locker_scene
 from memory_scene import render as memory_scene
 from stage_map import render as stage_map
@@ -43,9 +44,12 @@ def stage_table(summary):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", type=Path, default=ROOT / "evidence/kaggle-results.zip")
+    parser.add_argument("--traces", type=Path, default=ROOT / "evidence/depth-traces.json")
     parser.add_argument("--output", type=Path, default=ROOT / "index.html")
     args = parser.parse_args()
     html = TEMPLATE.read_text(encoding="utf-8")
+    traces = json.loads(args.traces.read_text(encoding="utf-8"))
+    html = html.replace("{{DEPTH_EXPLORER}}", depth_view(traces))
     with ZipFile(args.archive) as archive, TemporaryDirectory() as temp:
         def read_result(name):
             return json.loads(archive.read("results/" + name))

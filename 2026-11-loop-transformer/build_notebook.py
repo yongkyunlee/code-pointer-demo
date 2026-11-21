@@ -136,6 +136,47 @@ def build(path, validation):
                   hashlib.sha256(final_archive.read_bytes()).hexdigest(), flush=True)
             verification.check_returncode()
         """).strip()))
+    return write_notebook(path, cells)
+
+
+def build_depth_trace(path):
+    cells = [
+        cell("markdown", "# Loop Transformer depth trace\n\nReplay one held-out example per task with each pinned checkpoint. The two conditions in each example are read after every executed block using the same output norm and head."),
+        cell("code", dedent(SETUP).strip()),
+    ]
+    for name in ("model_engine.py", "carry.py", "memory.py", "cue.py", "depth_trace.py"):
+        cells.append(cell("code", f"%%writefile /kaggle/temp/loop-source/{name}\n" + (ROOT / name).read_text()))
+    cells.append(cell("code", dedent("""
+        from concurrent.futures import ThreadPoolExecutor
+        import hashlib
+        import json
+
+        models = ("ouro", "qwen")
+        devices = torch.cuda.device_count()
+        def measure(item):
+            index, model = item
+            destination = temp / f"trace-{model}.json"
+            print("Tracing", model, flush=True)
+            subprocess.run(
+                [sys.executable, "-u", str(src / "depth_trace.py"), model, "--out", str(destination)],
+                check=True, cwd=src, env=dict(env, CUDA_VISIBLE_DEVICES=str(index % devices)),
+            )
+            return model, json.loads(destination.read_text())
+        with ThreadPoolExecutor(max_workers=min(devices, len(models))) as pool:
+            traces = dict(pool.map(measure, enumerate(models)))
+        path = work / "depth-traces.json"
+        path.write_text(json.dumps(traces, ensure_ascii=False, separators=(",", ":"), allow_nan=False))
+        for model, trace in traces.items():
+            for task, item in trace["tasks"].items():
+                print(model, task, [(c["key"], len(c["points"]), c["points"][-1]["margin"])
+                                    for c in item["conditions"]], flush=True)
+        print("Verified per-block traces", path.name, path.stat().st_size,
+              hashlib.sha256(path.read_bytes()).hexdigest(), flush=True)
+    """).strip()))
+    return write_notebook(path, cells)
+
+
+def write_notebook(path, cells):
     for i, content in enumerate(cells):
         content["id"] = f"loop-study-{i:02d}"
     notebook = {"nbformat": 4, "nbformat_minor": 5, "cells": cells, "metadata": {
@@ -148,6 +189,8 @@ def build(path, validation):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=Path)
-    parser.add_argument("--validation", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--validation", action="store_true")
+    mode.add_argument("--depth-trace", action="store_true")
     args = parser.parse_args()
-    print(build(args.path, args.validation))
+    print(build_depth_trace(args.path) if args.depth_trace else build(args.path, args.validation))

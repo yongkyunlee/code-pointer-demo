@@ -1,6 +1,6 @@
 # Loop Transformer experiments
 
-All three tasks ran on looped and regular Transformers. The report compares both matched eight-block training runs and two frozen checkpoints, Ouro-1.4B (looped) and Qwen2.5-1.5B (regular). Each walkthrough maps the intervention to the actual block visits in both models. Readers can choose where to swap a hidden state, follow the carry across two additions, predict where each observer last saw a moving coin, and switch off attention to a repeated locker clue. Each outcome comes from the recorded run. The saved Kaggle run passed all 13 workload checks. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
+Follow a single question through a looped Transformer and a regular Transformer. The interactive report maps each visit to the block that ran. Select a square to see which token the output head favored there, inspect the effect of the intervention, or compare all four visits to the same Ouro weights. The report includes three tasks, the frozen Ouro-1.4B and Qwen2.5-1.5B checkpoints, and a separate comparison of small models trained at matched width and depth. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
 
 The [experiment lab](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/experiment-lab.html) is a shorter companion for first-time readers. Each experiment asks for a prediction, shows the intervention on both architectures block by block, and then reveals the recorded answers beside the matched small-model result.
 
@@ -46,6 +46,18 @@ If you edit the experiment modules, rebuild the self-contained notebook before i
 ```sh
 python3 build_notebook.py loop-transformer-experiments.ipynb
 python3 build_notebook.py loop-transformer-validation.ipynb --validation
+```
+
+## Reproduce the per-block trace
+
+Import [the depth-trace notebook](loop-transformer-depth-trace.ipynb) into a new Kaggle notebook with internet access and select GPU T4 ×2. Run all cells. The last cell combines the two checkpoint runs into `/kaggle/working/depth-traces.json`. [Published measurements](evidence/depth-traces.json)
+
+The notebook replays one held-out example per task under two conditions. After each decoder block it projects the hidden state at the final question token through the checkpoint’s own final normalization and language-model head. It records the unrestricted top token and the difference between candidate logits. The carry trace compares “eight” with “seven”, the coin trace compares the actual box B with the stronger of A and L, and the locker trace compares “apple” with “orange”. Each curve follows a single prompt. The early readouts describe what the final head can read from that state. The separate swap and attention-cut experiments test how changing a state affects the eventual output.
+
+The runner checks native forward parity, the final projected logits, and 16 previously archived margins across both checkpoints. Parameter sharing determines the physical block column, while execution depth counts each visit. To rebuild the trace notebook after editing its source, use the following command.
+
+```sh
+python3 build_notebook.py loop-transformer-depth-trace.ipynb --depth-trace
 ```
 
 ## Rebuild the reader report

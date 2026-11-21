@@ -61,34 +61,39 @@ details.numbers{padding:9px 0 0;margin-top:12px;border-top:1px solid var(--line)
 #locker-scene:has(#lk-target_early:checked,#lk-target_both:checked) .ap-cell[data-stage="2"],#locker-scene:has(#lk-target_late:checked,#lk-target_both:checked) .ap-cell[data-stage="3"]{box-shadow:inset 0 0 0 1.5px var(--rust)}
 @container(max-width:660px){.ap-lanes{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.ap-track,.ap-track ol{display:grid;grid-template-columns:1fr;gap:4px}.ap-track{grid-template-rows:auto 1fr}.ap-track ol{grid-template-rows:repeat(4,1fr)}.ap-name{margin-bottom:3px}.ap-cell{padding:7px}.ap-weights{font-size:14px}.ap-stage{font-size:10.5px}}
 @media(max-width:820px){.checkpoint-setup{grid-template-columns:1fr}.matched-all{grid-column:auto}}
+
+.depth-intro{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:clamp(20px,5vw,70px);padding:clamp(26px,4vw,54px) 0 22px}.depth-intro h1{max-width:18ch;font-size:clamp(42px,4.7vw,68px);line-height:1.02}.depth-intro .kicker{margin-bottom:9px}.depth-intro>p{color:var(--body);max-width:54ch;font-size:clamp(16px,1.45vw,20px);margin-bottom:3px}
+.matched-pair,.matched-evidence{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,52px);align-items:start}.matched-evidence{margin-top:32px}.matched-evidence .matched-all{grid-column:auto}.back-trace{display:inline-block;margin:10px 0 5px;font-size:14px;font-weight:650}
+@media(max-width:820px){.depth-intro,.matched-pair,.matched-evidence{grid-template-columns:1fr}.depth-intro{gap:10px}.depth-intro h1{max-width:none}.depth-intro>p{max-width:64ch}.matched-evidence{gap:20px}.mast nav{flex-wrap:wrap}}
+@media(max-width:550px){.mast nav{justify-content:flex-start;column-gap:12px;row-gap:4px}.mast nav a{font-size:12px}.depth-intro{padding-top:20px}}
 </style>
 </head>
 <body>
 <a class="skip" href="#results">Skip to results</a>
 <header class="mast"><div class="wrap">
 <a class="brand" href="https://codepointer.substack.com/"><span class="brandmark" aria-hidden="true">›</span>Code Pointer</a>
-<nav aria-label="Report sections"><a href="#swaps">Carry swap</a><a href="#memory">Moving coin</a><a href="#clue">Locker clue</a><a href="#evidence">Evidence</a></nav>
+<nav aria-label="Report sections"><a href="#depth-explorer">Depth explorer</a><a href="#swaps">Carry swap</a><a href="#memory">Moving coin</a><a href="#clue">Locker clue</a><a href="#evidence">Evidence</a></nav>
 </div></header>
 <main id="results">
 <div class="wrap">
-<section class="hero" aria-labelledby="title">
-<div><p class="kicker">Mechanistic interpretability</p><h1 id="title">Looped vs. regular Transformers</h1>
-<p class="dek">Does a Transformer use a clue differently the second time it runs the same block? We ran the same three tasks on looped and regular models. In small models we matched the training and depth. In pretrained models we compared Ouro with Qwen on identical examples.</p>
-<div class="study-links"><a href="#matched">Small models · matched training</a><a href="#pretrained">Ouro and Qwen · pretrained</a></div>
-</div>
-{{STAGE_MAP}}
-</section>
-<section class="chapter columns" aria-labelledby="matched">
+<header class="depth-intro" aria-labelledby="title"><div>
+<p class="kicker">Mechanistic interpretability</p><h1 id="title">Looped vs. regular Transformers</h1>
+</div><p>Follow one prompt through two actual checkpoints. Ouro visits the same 24 blocks four times. Qwen visits 28 different blocks once. After every visit, we read the answer position through that model’s output head.</p></header>
+{{DEPTH_EXPLORER}}
+<section class="chapter" aria-labelledby="matched"><div class="matched-pair">
 <div class="column-title"><p class="kicker">Controlled architecture comparison</p><h2 id="matched">Same depth, different weights</h2>
 <p>A Transformer block contains attention and a feed-forward network. The looped model applied the same pair of blocks four times. The regular model applied four independently trainable pairs once each. Both models started with identical outputs and saw the same training tokens within each seed. Both learned the tens digit, reaching 96.3% clean accuracy with tied weights and 95.8% with independent weights. A narrower untied model with a similar parameter count to the tied model reached 97.9%.</p>
 <p>A swap after the first stage pushed the final score further toward the donor’s carry in the tied model. The difference was <strong>+0.320 logits</strong>, and all three training seeds agreed on its direction. By the fourth stage the average had reversed, and the seeds disagreed.</p></div>
+{{STAGE_MAP}}
+</div>
+<div class="matched-evidence">
 <figure class="fig" aria-labelledby="effect-title">
 <div class="fig-pad"><h3 class="sr-only" id="effect-title">Effect of swapping a hidden state</h3>
 {{EFFECT_PLOT}}</div>
 <figcaption>Each dot shows the looped model’s score change minus the regular model’s score change at the same depth. Whiskers give 95% intervals over held-out sums, grouped by total, for these three seeds.
 <details class="numbers"><summary>Read the chart values</summary>{{EFFECT_TABLE}}</details>
 </figcaption></figure>
-<div class="matched-all">{{TRAINING_COMPARISON}}</div>
+<div class="matched-all">{{TRAINING_COMPARISON}}</div></div>
 </section>
 <section class="checkpoint-setup" aria-labelledby="pretrained">
 <div><p class="kicker">Pretrained checkpoints</p><h2 id="pretrained">The same tasks in Ouro and Qwen</h2></div>
@@ -96,6 +101,7 @@ details.numbers{padding:9px 0 0;margin-top:12px;border-top:1px solid var(--line)
 <section class="chapter frozen-carry" aria-labelledby="swaps"><p class="kicker">Recorded interventions</p><h2 id="swaps">Inspect a carry swap</h2>
 <p style="max-width:75ch;margin:12px 0 22px;color:var(--body)">28 + 47 and 60 + 15 both equal 75. Only the first sum needs a carry. If that carry alone moves into the second sum, its tens digit would become eight. We copied the whole hidden state at the last prompt token and compared the first word each model produced.</p>
 {{SWAP_EXPLORER}}
+<a class="back-trace" data-depth-task="carry" href="#depth-explorer">Inspect every block for carry family 000 ↑</a>
 </section>
 <section class="chapter columns" aria-labelledby="carry">
 <div class="column-title"><p class="kicker">Pretrained models · arithmetic</p><h2 id="carry">Reading a carry in two languages</h2>
@@ -109,12 +115,14 @@ details.numbers{padding:9px 0 0;margin-top:12px;border-top:1px solid var(--line)
 <p>A coin moves between three boxes. Alice and Bob witness different moves. Across 120 scenes, each model answered three questions per scene about the two people’s beliefs and the coin’s actual location.</p></div>
 {{MEMORY_PATH}}
 {{MEMORY_SCENE}}
+<a class="back-trace" data-depth-task="memory" href="#depth-explorer">Trace the actual-location question through every block ↑</a>
 <p class="note memory-outcome">With eight stored positions, both models finished near three-choice chance. The 95% scene-bootstrap intervals were 30.0–34.2% for Ouro and 30.6–34.4% for Qwen. Neither model ranked all three answers correctly in a scene. Substituting states from a different ending changed the top-ranked box for the actual-location question in <strong>0 of 120 scenes</strong> in either model.</p>
 </section>
 <section class="chapter" aria-labelledby="clue">
 <div class="column-title"><p class="kicker">Pretrained models · retrieval</p><h2 id="clue">A second copy of the clue</h2>
 <p>Each locker record placed a fruit in each of two lockers and assigned each person a locker. The model saw the record twice. We blocked the part of the second copy that describes the lockers from reading a person’s assignment in the first copy at selected depths.</p></div>
 {{LOCKER_SCENE}}
+<a class="back-trace" data-depth-task="locker" href="#depth-explorer">Compare the intact and blocked runs at every depth ↑</a>
 <div class="story-outcome"><div class="column-title"><h3 class="sub">Across all 100 locker records</h3><p>Ouro ranked the right fruit higher in 93 scenes, yet it produced that fruit as its next token in only 45. Qwen’s two scores were 55 and zero.</p>
 <p>Cutting that same attention link at every layer reduced the correct fruit’s lead in both models. To test whether a second visit recovered the clue, we measured how much more the later cut cost when we also made the early cut. The Ouro-minus-Qwen difference was +0.00273 logits (95% paired interval −0.00008 to +0.00578). These data leave a recovery advantage for the looped checkpoint unresolved.</p></div>
 <figure class="fig" aria-labelledby="clue-title"><div class="fig-pad"><p class="overline">100 held-out locker records</p><h3 class="sr-only" id="clue-title">Ranking and generating the fruit</h3>
@@ -122,7 +130,8 @@ details.numbers{padding:9px 0 0;margin-top:12px;border-top:1px solid var(--line)
 </section></div>
 <section class="data-footer" aria-labelledby="evidence"><div class="wrap"><div class="columns"><div><p class="kicker">Reproduction</p><h2 id="evidence">Code and evidence</h2></div>
 <div class="copy"><p>All 13 required workloads passed on Kaggle using two Tesla T4 GPUs. An independent local replay reproduced the audit from the downloaded measurements. The archive includes the per-family records, executed Python, figures and validation receipts.</p>
-<div class="resource-links"><a href="https://github.com/yongkyunlee/code-pointer-demo/tree/main/2026-11-loop-transformer">Experiment code and run instructions</a><a href="https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/evidence/kaggle-results.zip">Download measurements (6.2 MiB)</a><a href="https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/evidence/audit.json">Run audit</a></div>
+<div class="resource-links"><a href="https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/evidence/depth-traces.json">Per-block GPU measurements</a><a href="https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/loop-transformer-depth-trace.ipynb">Depth-trace notebook</a><a href="https://github.com/yongkyunlee/code-pointer-demo/tree/main/2026-11-loop-transformer">Experiment code and run instructions</a><a href="https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/evidence/kaggle-results.zip">Download measurements (6.2 MiB)</a><a href="https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/evidence/audit.json">Run audit</a></div>
+<p>Try predicting each intervention’s outcome in the <a href="https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/experiment-lab.html">companion experiment lab</a>.</p>
 <p class="refs">Pinned checkpoints · <a href="https://huggingface.co/ByteDance/Ouro-1.4B/tree/574fa66cb8bf5abdc979642d01cf2b79b16bfab1">Ouro-1.4B</a> · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B/tree/8faed761d45a263340a0528343f099c05c9a4323">Qwen2.5-1.5B</a></p></div></div>
 <div class="foot-brand">Code Pointer · Recurrent pretraining experiments</div></div></section>
 </main></body></html>
