@@ -144,7 +144,7 @@ def card(model, task, entry, plot_limit, color_limit, temp):
     by_depth = {}
     for event in treatment.get("events", []):
         by_depth.setdefault(event["depth"], []).append(event["label"])
-    event_text = {d: " · ".join(values) for d, values in by_depth.items()}
+    event_text = {d: treatment["label"] + " · " + " · ".join(values) for d, values in by_depth.items()}
     stage_rows = []
     table_rows = []
     for stage in range(1, 5):
