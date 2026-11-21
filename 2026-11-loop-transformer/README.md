@@ -1,6 +1,6 @@
 # Loop Transformer experiments
 
-This reader report follows an arithmetic carry through a looped Transformer and compares its behavior on memory and repeated-clue tasks. It includes charts and an explorer for the words produced in 400 recorded checkpoint, language and sum combinations. The saved Kaggle run passed all 13 workload checks. [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
+This reader report follows an arithmetic carry through a looped Transformer and compares its behavior on memory and repeated-clue tasks. It includes charts and an explorer for the words produced in 400 recorded checkpoint, language and sum combinations. The saved Kaggle run passed all 13 workload checks. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
 
 ## Reproduce the Kaggle run
 

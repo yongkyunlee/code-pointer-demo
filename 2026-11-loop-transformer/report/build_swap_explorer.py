@@ -170,7 +170,7 @@ def render(data):
 <tbody>{''.join(table)}</tbody></table>
 <p class="sw-guide">The margin subtracts the log probability of the correct word from the log probability of the word predicted by transferring the opposite carry. Change is relative to the clean prompt. Scores use natural logarithms and include every token of each word.</p>
 <p class="sw-sr" aria-live="polite" aria-atomic="true" data-field="status"></p>
-<script type="application/json" class="sw-records">{data_json}</script>
+<template class="sw-records">{data_json}</template>
 {SCRIPT}
 </div>
 """
@@ -179,8 +179,8 @@ def render(data):
 SCRIPT = """
 <script>
 (() => {
-  const root = document.currentScript.closest(".cp-swap");
-  const records = JSON.parse(root.querySelector(".sw-records").textContent);
+  const root = document.querySelector(".cp-swap");
+  const records = JSON.parse(root.querySelector(".sw-records").content.textContent);
   const field = (name, parent = root) => parent.querySelector('[data-field="' + name + '"]');
   const choice = name => root.querySelector('[data-select="' + name + '"]');
   const num = value => Math.abs(value) < .0005 ? "0.000" : (value > 0 ? "+" : "−") + Math.abs(value).toFixed(3);
