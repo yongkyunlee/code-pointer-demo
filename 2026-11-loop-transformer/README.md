@@ -2,6 +2,8 @@
 
 All three tasks ran on looped and regular Transformers. The report compares both matched eight-block training runs and two frozen checkpoints, Ouro-1.4B (looped) and Qwen2.5-1.5B (regular). Each walkthrough maps the intervention to the actual block visits in both models. Readers can choose where to swap a hidden state, follow the carry across two additions, predict where each observer last saw a moving coin, and switch off attention to a repeated locker clue. Each outcome comes from the recorded run. The saved Kaggle run passed all 13 workload checks. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
 
+The [experiment lab](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/experiment-lab.html) is a shorter companion for first-time readers. Each experiment asks for a prediction, shows the intervention on both architectures block by block, and then reveals the recorded answers beside the matched small-model result.
+
 ## Reproduce the Kaggle run
 
 1. Create a fresh Kaggle notebook. Use **File → Import Notebook** to import [loop-transformer-experiments.ipynb](loop-transformer-experiments.ipynb).
@@ -54,6 +56,12 @@ The HTML builder uses Matplotlib (3.11.2 in the published build) and the Python 
 
 ```sh
 python3 report/build.py
+```
+
+The experiment lab has its own builder, which uses the Python standard library and reuses the report's scene extractors. It checks the embedded values against the archive and writes only `experiment-lab.html`.
+
+```sh
+python3 report/build_experiment_lab.py
 ```
 
 The original [memory qualification archive](evidence/memory-qualification.zip) preserves the pilot measurements that the final run reused.
