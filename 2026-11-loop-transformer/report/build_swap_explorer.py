@@ -78,8 +78,33 @@ CSS = """
 .cp-swap .sw-controls label,.cp-swap .sw-col { display:block; font-size:.86em; color:var(--sw-muted); font-weight:650; }
 .cp-swap select { min-height:2.7rem; width:100%; max-width:100%; font:inherit; font-size:1rem; color:var(--sw-ink); background:#fffdf9; border:1px solid #718d84; border-radius:.35rem; padding:.34rem .4rem; margin-top:.28rem; }
 .cp-swap select:focus-visible { outline:3px solid var(--sw-teal); outline-offset:2px; }
-.cp-swap .sw-scene { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem .9rem; border-left:3px solid var(--sw-teal); background:#eef4ee; padding:.7rem .8rem; margin:.55rem 0 1.05rem; }
-.cp-swap .sw-scene strong { color:var(--sw-ink); font-weight:650; font-size:1.15em; }
+.cp-swap .sw-picker { margin:.2rem 0 .9rem; display:flex; align-items:baseline; flex-wrap:wrap; gap:.4rem .8rem; }
+.cp-swap .sw-picker label { font-size:.9em; font-weight:650; }
+.cp-swap .sw-picker select { width:auto; max-width:100%; margin-top:0; min-height:2.5rem; }
+.cp-swap .sw-pair { display:grid; grid-template-columns:minmax(0,1fr) clamp(34px,9cqw,96px) minmax(0,1fr); gap:.35rem; margin:.7rem 0; }
+.cp-swap .sw-board { border:1px solid var(--sw-line); background:#f4f5ee; border-radius:.5rem; padding:clamp(.55rem,2cqw,1rem); min-width:0; }
+.cp-swap [data-board="recipient"] { background:#edf4ee; }
+.cp-swap .sw-arrow { align-self:center; text-align:center; color:var(--sw-teal); font-weight:650; line-height:1.2; }
+.cp-swap .sw-arrow b { display:block; font-size:clamp(21px,3cqw,31px); }
+.cp-swap .sw-arrow small { font-size:.75rem; }
+.cp-swap .sw-pair:has([data-board="donor"][hidden]) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.cp-swap .sw-pair:has([data-board="donor"][hidden]) .sw-arrow { display:none; }
+@container (max-width:34rem) { .cp-swap .sw-arrow small { display:none; } }
+.cp-swap .sw-board-title { display:flex; gap:.2rem .6rem; flex-wrap:wrap; justify-content:space-between; align-items:baseline; font-size:.88em; }
+.cp-swap .sw-board-title strong { color:var(--sw-teal); }
+.cp-swap .sw-board-title span { color:var(--sw-muted); }
+.cp-swap .sw-columns { width:max-content; margin:.6rem auto; color:var(--sw-ink); font:500 clamp(1.55rem,4.3cqw,2.2rem)/1.15 ui-monospace,SFMono-Regular,Consolas,monospace; }
+.cp-swap .sw-line { display:grid; grid-template-columns:.75em 1em 1em; text-align:center; }
+.cp-swap .sw-line span:last-child { background:#d9e7d9; }
+.cp-swap .sw-line:last-child { border-top:2px solid #546f64; font-weight:700; padding-top:.07em; }
+.cp-swap .sw-calc { line-height:1.4; margin:.35rem 0 0; text-align:center; font:600 clamp(.75rem,2.1cqw,.96rem)/1.45 ui-monospace,SFMono-Regular,Consolas,monospace; }
+.cp-swap .sw-empty { min-height:100%; display:grid; place-content:center; text-align:center; border:1px dashed var(--sw-line); border-radius:.5rem; padding:.65rem; color:var(--sw-muted); }
+.cp-swap .sw-readout { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-block:1px solid var(--sw-line); margin:.8rem 0; padding:.75rem 0; gap:.5rem; }
+.cp-swap .sw-readout>div+div { border-left:1px solid var(--sw-line); padding-left:.7rem; }
+.cp-swap .sw-readout strong { display:block; color:var(--sw-teal); font:600 clamp(1.35rem,3.5cqw,2rem)/1.13 Georgia,serif; overflow-wrap:anywhere; }
+.cp-swap .sw-readout .sw-col { font-size:.8em; margin-bottom:.25rem; }
+.cp-swap .sw-comparison { margin:.8rem 0 0; }
+.cp-swap .sw-comparison summary { color:var(--sw-teal); cursor:pointer; font-weight:650; }
 .cp-swap .sw-meta,.cp-swap .sw-guide { color:var(--sw-muted); margin:.45rem 0; line-height:1.45; font-size:.88em; }
 .cp-swap table.sw-results { width:100%; max-width:100%; border-collapse:collapse; font:inherit; table-layout:auto; margin:0; color:var(--sw-ink); }
 .cp-swap .sw-results th,.cp-swap .sw-results td { border:0; border-bottom:1px solid var(--sw-line); padding:.58rem .42rem; background:transparent; vertical-align:top; text-align:left; color:inherit; font-size:.94em; line-height:1.3; }
@@ -94,8 +119,9 @@ CSS = """
 @container (max-width:34rem) {
   .cp-swap .sw-controls { grid-template-columns:1fr 1fr; }
   .cp-swap .sw-controls label:last-child { grid-column:1/-1; }
-  .cp-swap .sw-scene { grid-template-columns:1fr 1fr; }
-  .cp-swap .sw-scene > div:first-child { grid-column:1/-1; }
+  .cp-swap .sw-board-title { flex-direction:column; }
+  .cp-swap .sw-readout>div+div { padding-left:.4rem; }
+  .cp-swap .sw-readout .sw-col { font-size:.76em; }
   .cp-swap .sw-results,.cp-swap .sw-results tbody { display:block; }
   .cp-swap .sw-results thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .cp-swap .sw-results tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.1rem .8rem; padding:.6rem 0; border-top:1px solid var(--sw-line); }
@@ -126,6 +152,23 @@ def options(values):
     return "".join(f'<option value="{esc(key)}">{esc(label)}</option>' for key, label in values)
 
 
+def addition_board(role, pair, lang):
+    """Keep the visual digits quiet to readers; provide the equation in one phrase."""
+    a, b = pair
+    units = a % 10 + b % 10
+    def line(operator, number, label):
+        return (f'<div class="sw-line"><span>{operator}</span>'
+                f'<span data-digit="{label}-tens">{number // 10}</span>'
+                f'<span data-digit="{label}-ones">{number % 10}</span></div>')
+    return (
+        f'<div class="sw-board" data-board="{role.lower()}">'
+        f'<div class="sw-board-title"><strong>{role}</strong><span data-part="language">{esc(lang)}</span></div>'
+        f'<span class="sw-sr" data-part="equation">{a} + {b} = {a+b}.</span>'
+        f'<div class="sw-columns" aria-hidden="true">{line("",a,"a")}{line("+",b,"b")}{line("",a+b,"result")}</div>'
+        f'<p class="sw-calc" data-part="units">{a%10} + {b%10} = {units} → carry {units//10}</p></div>'
+    )
+
+
 def render(data):
     first = data["ouro"]["English"][0]
     names = [("Clean", "Original prompt"), *((title, sub) for _, title, sub in CONDITIONS)]
@@ -147,6 +190,10 @@ def render(data):
         )
     family_options = options((i, f"{i:03} · total {item['total']}")
                              for i, item in enumerate(data["ouro"]["English"]))
+    selected = first["rows"][2]
+    a, b = first["pair"]
+    donor_carry = sum(number % 10 for number in selected["donor"]) // 10
+    prediction = f"{a // 10} + {b // 10} + {donor_carry} = {first['target_digit']}"
     selectors = (
         '<fieldset class="sw-controls" hidden><legend class="sw-sr">Choose a recorded swap</legend>'
         f'<label>Checkpoint<select data-select="model">{options((k,v[0]) for k,v in MODELS.items())}</select></label>'
@@ -160,15 +207,33 @@ def render(data):
 <div class="cp-swap" role="region" aria-label="Recorded stage-three carry swaps">
 {selectors}
 <p class="sw-meta" data-field="intro">Ouro-1.4B · stage 3 · shared block 24 · family 000 · English</p>
-<div class="sw-scene">
-  <div><span class="sw-col">Recipient sum</span><strong data-field="sum">{esc(sumtext(first['pair']))} = {first['total']}</strong></div>
-  <div><span class="sw-col">Correct tens digit</span><strong data-field="correct">{esc(first['correct'])} ({first['digit']})</strong></div>
-  <div><span class="sw-col">With donor’s opposite carry</span><strong data-field="target">{esc(first['target'])} ({first['target_digit']})</strong></div>
+<div class="sw-picker" hidden><label for="sw-condition">Intervention</label>
+<select id="sw-condition" data-select="condition">
+<option value="0">Clean prompt</option>
+<option value="1">Opposite carry · same language</option>
+<option value="2" selected>Opposite carry · other language</option>
+<option value="3">Same carry · sham swap</option>
+</select></div>
+<div class="sw-pair">
+{addition_board("Donor",selected['donor'],selected['donor_lang'])}
+<div class="sw-empty" data-part="empty-donor" hidden>Clean prompt<br>Original state</div>
+<div class="sw-arrow" aria-hidden="true"><b>→</b><small>Copy state</small></div>
+{addition_board("Recipient",first['pair'],"English")}
 </div>
+<p class="sw-meta" data-field="operation">The run replaced the recipient’s whole hidden state at its last prompt token with the donor’s state. If only the carry transferred, the recipient would keep its own tens operands.</p>
+<div class="sw-readout">
+  <div><span class="sw-col">Clean first word</span><strong data-field="clean-output">{esc(first['rows'][0]['word'])}</strong>
+    <span class="sw-small" data-field="clean-correct">Correct word · {esc(first['correct'])}</span></div>
+  <div><span class="sw-col" data-field="prediction-label">Carry-only prediction</span><strong data-field="prediction">{esc(first['target'])}</strong>
+    <span class="sw-small" data-field="tens-calculation">{esc(prediction)}</span></div>
+  <div><span class="sw-col">Recorded first word</span><strong data-field="recorded">{esc(selected['word'])}</strong>
+    <span class="sw-small" data-field="recorded-info">{esc(selected['info'])}</span></div>
+</div>
+<details class="sw-comparison"><summary>Compare all four runs and their scores</summary>
 <table class="sw-results" role="table"><caption class="sw-sr">Greedy first words and full-word scores after changing one answer-position state</caption>
 <thead><tr><th scope="col">Condition</th><th scope="col">Donor</th><th scope="col">First word</th><th scope="col" class="sw-num">Margin</th><th scope="col" class="sw-num">Change</th></tr></thead>
 <tbody>{''.join(table)}</tbody></table>
-<p class="sw-guide">The margin subtracts the log probability of the correct word from the log probability of the word predicted by transferring the opposite carry. Change is relative to the clean prompt. Scores use natural logarithms and include every token of each word.</p>
+<p class="sw-guide">All four margins compare the opposite-carry word with the correct word, even for the sham. The margin is the log probability of <b data-field="margin-target">{esc(first['target'])}</b> minus the log probability of <b data-field="margin-original">{esc(first['correct'])}</b>. Change is relative to the clean prompt. Scores include every token of each word and use natural logarithms.</p></details>
 <p class="sw-sr" aria-live="polite" aria-atomic="true" data-field="status"></p>
 <template class="sw-records">{data_json}</template>
 {SCRIPT}
@@ -185,6 +250,22 @@ SCRIPT = """
   const choice = name => root.querySelector('[data-select="' + name + '"]');
   const num = value => Math.abs(value) < .0005 ? "0.000" : (value > 0 ? "+" : "−") + Math.abs(value).toFixed(3);
   const sum = operands => operands.join(" + ");
+  const part = (name, parent = root) => parent.querySelector('[data-part="' + name + '"]');
+  function setBoard(role, operands, lang) {
+    const board = root.querySelector('[data-board="' + role + '"]');
+    board.hidden = !operands;
+    if (!operands) return;
+    const [a,b] = operands;
+    const total = a+b;
+    for (const [name, value] of [["a",a],["b",b],["result",total]]) {
+      board.querySelector('[data-digit="' + name + '-tens"]').textContent = Math.floor(value/10);
+      board.querySelector('[data-digit="' + name + '-ones"]').textContent = value % 10;
+    }
+    const units = a%10 + b%10;
+    part("units",board).textContent = (a%10) + " + " + (b%10) + " = " + units + " → carry " + Math.floor(units/10);
+    part("language",board).textContent = lang;
+    part("equation",board).textContent = sum(operands) + " = " + total + ".";
+  }
   function update() {
     const model = choice("model").value;
     const lang = choice("lang").value;
@@ -193,9 +274,28 @@ SCRIPT = """
     const label = model === "ouro" ? "Ouro-1.4B · stage 3 · shared block 24" : "Qwen2.5-1.5B · stage 3 · block 21";
     const status = label + " · family " + String(family).padStart(3, "0") + " · " + lang;
     field("intro").textContent = status;
-    field("sum").textContent = sum(rec.pair) + " = " + rec.total;
-    field("correct").textContent = rec.correct + " (" + rec.digit + ")";
-    field("target").textContent = rec.target + " (" + rec.target_digit + ")";
+    const condition = Number(choice("condition").value);
+    const row = rec.rows[condition];
+    setBoard("recipient", rec.pair, lang);
+    setBoard("donor", row.donor, row.donor_lang);
+    part("empty-donor").hidden = Boolean(row.donor);
+    field("operation").textContent = row.donor
+      ? "The run replaced the recipient’s whole hidden state at its last prompt token with the donor’s state. If only the carry transferred, the recipient would keep its own tens operands."
+      : "The clean run kept the recipient’s original hidden state. Its correct tens digit comes from adding its two tens operands and its own carry.";
+    const pair = row.donor || rec.pair;
+    const carry = Math.floor((pair[0]%10 + pair[1]%10) / 10);
+    const [left, right] = rec.pair.map(value => Math.floor(value/10));
+    const predictedDigit = left + right + carry;
+    const predictedWord = predictedDigit === rec.digit ? rec.correct : rec.target;
+    field("clean-output").textContent = rec.rows[0].word;
+    field("clean-correct").textContent = "Correct word · " + rec.correct;
+    field("prediction-label").textContent = row.donor ? "Carry-only prediction" : "Arithmetic prediction";
+    field("prediction").textContent = predictedWord;
+    field("tens-calculation").textContent = left + " + " + right + " + " + carry + " = " + predictedDigit;
+    field("recorded").textContent = row.word;
+    field("recorded-info").textContent = row.info;
+    field("margin-target").textContent = rec.target;
+    field("margin-original").textContent = rec.correct;
     root.querySelectorAll(".sw-results tbody tr").forEach((tr, i) => {
       const item = rec.rows[i];
       field("donor",tr).textContent = item.donor ? sum(item.donor) : "None";
@@ -205,10 +305,12 @@ SCRIPT = """
       field("margin",tr).textContent = num(item.margin);
       field("delta",tr).textContent = num(item.delta);
     });
-    field("status").textContent = "Results updated. " + status + ". Recipient sum " + sum(rec.pair) + ".";
+    field("status").textContent = status + ". " + choice("condition").selectedOptions[0].text + ". Prediction " + predictedWord + ". Recorded first word " + row.word + ".";
   }
   root.querySelector(".sw-controls").addEventListener("change", update);
+  choice("condition").addEventListener("change", update);
   root.querySelector(".sw-controls").hidden = false;
+  root.querySelector(".sw-picker").hidden = false;
 })();
 </script>
 """

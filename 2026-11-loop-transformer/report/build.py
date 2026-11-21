@@ -7,6 +7,9 @@ from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 from build_swap_explorer import records, render
+from locker_scene import render as locker_scene
+from memory_scene import render as memory_scene
+from stage_map import render as stage_map
 from plot_reader_figures import carry_figure, cue_figure, style
 
 
@@ -55,7 +58,11 @@ def main():
         ):
             svg = (fig_dir / filename).read_text(encoding="utf-8")
             html = html.replace("{{" + marker + "}}", svg.replace("<svg ", '<svg class="plot" ', 1))
-        html = html.replace("{{EFFECT_TABLE}}", stage_table(read_result("paired/summary.json")))
+        summary = read_result("paired/summary.json")
+        html = html.replace("{{EFFECT_TABLE}}", stage_table(summary))
+        html = html.replace("{{STAGE_MAP}}", stage_map(summary))
+        html = html.replace("{{MEMORY_SCENE}}", memory_scene(archive))
+        html = html.replace("{{LOCKER_SCENE}}", locker_scene(archive))
     html = html.replace("{{SWAP_EXPLORER}}", render(records(args.archive)))
     args.output.write_text(html, encoding="utf-8")
 

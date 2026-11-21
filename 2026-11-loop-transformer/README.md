@@ -1,6 +1,6 @@
 # Loop Transformer experiments
 
-This reader report follows an arithmetic carry through a looped Transformer and compares its behavior on memory and repeated-clue tasks. It includes charts and an explorer for the words produced in 400 recorded checkpoint, language and sum combinations. The saved Kaggle run passed all 13 workload checks. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
+This reader report follows an arithmetic carry through a looped Transformer and compares its behavior on memory and repeated-clue tasks. Readers can choose where to swap a hidden state, follow the carry across two additions, predict where each observer last saw a moving coin, and switch off attention to a repeated locker clue. Each outcome comes from the recorded run. The saved Kaggle run passed all 13 workload checks. [Open the interactive report](https://htmlpreview.github.io/?https://github.com/yongkyunlee/code-pointer-demo/blob/main/2026-11-loop-transformer/index.html) · [Download the standalone HTML](https://github.com/yongkyunlee/code-pointer-demo/raw/refs/heads/main/2026-11-loop-transformer/index.html)
 
 ## Reproduce the Kaggle run
 
@@ -48,7 +48,7 @@ python3 build_notebook.py loop-transformer-validation.ipynb --validation
 
 ## Rebuild the reader report
 
-Open `index.html` directly to use the figures and swap explorer offline. The explorer shows the stage-three answer-position swaps for all 100 held-out arithmetic families, both checkpoints, and both recipient languages. Every displayed response comes from the saved Kaggle archive.
+Open `index.html` directly to use the figures and swap explorer offline. The explorer shows the stage-three answer-position swaps for all 100 held-out arithmetic families, both checkpoints, and both recipient languages. The coin walkthrough uses held-out scene 024, and the locker walkthrough uses scene 035. Each shows the recorded model answers for that example beside the aggregate results.
 
 The HTML builder uses Matplotlib (3.11.2 in the published build) and the Python standard library. It embeds the figures and the selected measurement fields in a single file.
 

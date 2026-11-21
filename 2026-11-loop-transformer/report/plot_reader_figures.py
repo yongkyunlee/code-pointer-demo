@@ -67,7 +67,7 @@ def carry_figure(read, out):
     fits = {(seed, arch): read(f"paired/{seed}_{arch}.json")["heldout"]["carry"]
             for seed in seeds for arch in ("tied", "untied")}
     fig = plt.figure(figsize=(5, 3.8))
-    label(fig, .045, .926, "Carry transfer across four stages", size=15.2, weight="bold")
+    label(fig, .045, .926, "Swapping a state at four depths", size=15.2, weight="bold")
     label(fig, .045, .845, "Tied minus untied change in target margin (logits)", size=9.6, color=MUTED)
     ax = fig.add_axes([.18, .236, .65, .528])
     ax.set(xlim=(-.32, .46), ylim=(3.55, -.53))
@@ -112,7 +112,7 @@ def carry_figure(read, out):
     label(fig, .045, .058, "Held-out families grouped by sum. Intervals condition on three seeds.", size=8, color=MUTED)
     desc = ("Same-language opposite-carry swaps. Difference in mean logit change, tied minus untied. " +
             "; ".join(values) + ". Individual seeds are shown below each interval.")
-    write_svg(fig, out / "carry-stage-differences.svg", "Carry transfer across four stages", desc)
+    write_svg(fig, out / "carry-stage-differences.svg", "Swapping a state at four depths", desc)
 
 
 def cue_figure(read, out):
